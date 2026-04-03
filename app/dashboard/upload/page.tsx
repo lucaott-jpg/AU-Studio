@@ -183,21 +183,21 @@ export default function UploadPage() {
           doc.setFillColor(255,255,255); doc.rect(0,0,W,12,'F')
           doc.setFillColor(S.r,S.g,S.b); doc.rect(0,11,W,0.5,'F')
           doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(7); doc.setFont('helvetica','bold')
-          doc.text(brand.name.toUpperCase(), M, 8)
+          doc.text((brand?.name ?? "").toUpperCase(), M, 8)
           doc.setTextColor(160,160,160); doc.setFont('helvetica','normal')
           doc.text(content!.title.toUpperCase().substring(0,50), W-M, 8, {align:'right'})
         } else if (template === 'institutional' || template === 'executive') {
           doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,12,'F')
           doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,4,12,'F')
           doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7); doc.setFont('helvetica','bold')
-          doc.text(brand.name.toUpperCase(), 8, 8)
+          doc.text((brand?.name ?? "").toUpperCase(), 8, 8)
           doc.setTextColor(dark?160:100,dark?160:100,dark?160:100)
           doc.text(content!.title.substring(0,50).toUpperCase(), W-M, 8, {align:'right'})
         } else if (template === 'split') {
           doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,55,H,'F')
           doc.setFillColor(S.r,S.g,S.b); doc.rect(55,0,W-55,12,'F')
           doc.setTextColor(255,255,255); doc.setFontSize(6.5); doc.setFont('helvetica','bold')
-          doc.text(brand.name.toUpperCase(), 5, 8)
+          doc.text((brand?.name ?? "").toUpperCase(), 5, 8)
         }
       }
 
@@ -228,7 +228,7 @@ export default function UploadPage() {
         addLogo(W-M-50, 20, 45, 18)
 
         doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(9); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), M, 35)
+        doc.text((brand?.name ?? "").toUpperCase(), M, 35)
         doc.setFillColor(S.r,S.g,S.b); doc.rect(M, 37, 25, 0.8, 'F')
 
         doc.setTextColor(10,10,10); doc.setFontSize(28); doc.setFont('helvetica','bold')
@@ -265,7 +265,7 @@ export default function UploadPage() {
         }
 
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(9); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), M, 36)
+        doc.text((brand?.name ?? "").toUpperCase(), M, 36)
         doc.setFillColor(S.r,S.g,S.b); doc.rect(M,39,30,0.8,'F')
 
         doc.setTextColor(255,255,255); doc.setFontSize(26); doc.setFont('helvetica','bold')
@@ -291,7 +291,7 @@ export default function UploadPage() {
         addLogo(5, 20, 44, 22)
 
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), 5, 55)
+        doc.text((brand?.name ?? "").toUpperCase(), 5, 55)
         doc.setTextColor(255,255,255,0.5 as any); doc.setFontSize(6.5); doc.setFont('helvetica','normal')
         doc.text(today, 5, 62)
 
@@ -325,7 +325,7 @@ export default function UploadPage() {
         }
 
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(8); doc.setFont('helvetica','normal')
-        doc.text(brand.name.toUpperCase(), M, 30)
+        doc.text((brand?.name ?? "").toUpperCase(), M, 30)
 
         doc.setTextColor(255,255,255); doc.setFontSize(28); doc.setFont('helvetica','bold')
         let ty = H*0.55-50
@@ -621,4 +621,5 @@ export default function UploadPage() {
     </div>
   )
 }
+
 
