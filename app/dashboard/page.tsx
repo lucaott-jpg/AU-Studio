@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -35,7 +35,7 @@ export default function DashboardPage() {
       .select('id, title, doc_type, status, updated_at, brands(name, primary_color, secondary_color)')
       .order('updated_at', { ascending: false })
       .limit(10)
-    setDocs(data || [])
+    setDocs((data as any) || [])
     setLoading(false)
   }
 
@@ -150,7 +150,7 @@ function DocRow({ doc, onStatus, timeAgo, router }: {
         <div className="text-sm font-medium text-aurum-black truncate">{doc.title}</div>
         <div className="text-xs text-gray-400 mt-0.5">
           {DOC_LABELS[doc.doc_type] || doc.doc_type}
-          {doc.brands?.name && <span className="text-gray-300"> · {doc.brands.name}</span>}
+          {doc.brands?.name && <span className="text-gray-300"> Â· {doc.brands.name}</span>}
         </div>
       </div>
 
@@ -175,3 +175,4 @@ function DocRow({ doc, onStatus, timeAgo, router }: {
     </div>
   )
 }
+
