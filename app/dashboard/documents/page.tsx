@@ -15,14 +15,14 @@ interface Document {
 }
 
 const DOC_TYPES = [
-  { key: 'report',    label: 'Report',              desc: 'Analytical report with findings and recommendations', icon: 'â–¤' },
-  { key: 'teaser',    label: 'Investment Teaser',   desc: 'High-level opportunity overview for investors', icon: 'â—ˆ' },
-  { key: 'loi',       label: 'Letter of Intent',    desc: 'Formal LOI outlining preliminary transaction terms', icon: 'â–£' },
-  { key: 'memo',      label: 'Executive Memo',      desc: 'Concise internal communication to leadership', icon: 'â–¥' },
-  { key: 'proposal',  label: 'Proposal',            desc: 'Formal business proposal with scope and fees', icon: 'â–¦' },
-  { key: 'termsheet', label: 'Term Sheet',          desc: 'Principal terms of a proposed transaction', icon: 'â–§' },
-  { key: 'board',     label: 'Board Presentation',  desc: 'Board-level presentation on strategy and performance', icon: 'â–¨' },
-  { key: 'pitch-deck',label: 'Pitch Deck',          desc: 'Investor or client presentation deck', icon: 'â–©' },
+  { key: 'report', label: 'Report', desc: 'Analytical report with findings and recommendations' },
+  { key: 'teaser', label: 'Investment Teaser', desc: 'High-level opportunity overview for investors' },
+  { key: 'loi', label: 'Letter of Intent', desc: 'Formal LOI outlining preliminary transaction terms' },
+  { key: 'memo', label: 'Executive Memo', desc: 'Concise internal communication to leadership' },
+  { key: 'proposal', label: 'Proposal', desc: 'Formal business proposal with scope and fees' },
+  { key: 'termsheet', label: 'Term Sheet', desc: 'Principal terms of a proposed transaction' },
+  { key: 'board', label: 'Board Presentation', desc: 'Board-level presentation on strategy and performance' },
+  { key: 'pitch-deck',label: 'Pitch Deck',          desc: 'Investor or client presentation deck' },
 ]
 
 const STATUS_STYLES: Record<string, string> = {
@@ -89,7 +89,6 @@ function DocumentsInner() {
     const params = new URLSearchParams({
       type: selected.type,
       brand: selected.brand,
-      ...(selected.deal && { deal: selected.deal }),
       mode: selected.mode
     })
     if (selected.type === 'pitch-deck') {
@@ -202,8 +201,8 @@ function DocumentsInner() {
                       {DOC_TYPES.find(t => t.key === doc.doc_type)?.label || doc.doc_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{doc.brands?.name || 'â€”'}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{doc.deals?.name || 'â€”'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{doc.brands?.name || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{doc.deals?.name || '—'}</td>
                   <td className="px-4 py-3">
                     <select value={doc.status} onChange={e => updateStatus(doc.id, e.target.value)}
                       className={`text-xs px-2 py-1 border outline-none bg-transparent cursor-pointer ${STATUS_STYLES[doc.status]}`}>
@@ -240,7 +239,7 @@ function DocumentsInner() {
                   <span className="text-xs text-gray-500 ml-1">Step {step} of 3</span>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">âœ•</button>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
             </div>
 
             <div className="p-6">
@@ -254,7 +253,6 @@ function DocumentsInner() {
                       <button key={type.key} onClick={() => handleTypeSelect(type.key)}
                         className={`text-left p-4 border transition-all ${selected.type === type.key ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
                         <div className="flex items-center gap-3">
-                          
                           <div>
                             <div className="text-xs font-semibold text-aurum-black">{type.label}</div>
                             <div className="text-xs text-gray-400 mt-0.5 leading-tight">{type.desc}</div>
@@ -286,7 +284,7 @@ function DocumentsInner() {
                             <div className="w-4 h-8" style={{ background: brand.secondary_color }}/>
                           </div>
                           <div className="font-medium text-sm text-aurum-black">{brand.name}</div>
-                          {selected.brand === brand.id && <div className="ml-auto text-aurum-yellow">âœ“</div>}
+                          {selected.brand === brand.id && <div className="ml-auto text-aurum-yellow">✓</div>}
                         </button>
                       ))}
                     </div>
@@ -299,23 +297,23 @@ function DocumentsInner() {
                 <div>
                   <div className="text-sm font-medium text-aurum-black mb-1">How would you like to start?</div>
                   <div className="text-xs text-gray-400 mb-4">
-                    Creating: <strong>{selectedDocType?.label}</strong> Â· Brand: <strong>{selectedBrand?.name}</strong>
+                    Creating: <strong>{selectedDocType?.label}</strong> · Brand: <strong>{selectedBrand?.name}</strong>
                   </div>
                   <div className="space-y-2">
                     {[
                       { key: 'ai', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
                       { key: 'blank', label: 'Start blank', desc: 'Open the editor with an empty document and write from scratch' },
                       { key: 'upload', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
+                      { key: 'place', label: 'Place as-is', desc: 'Upload a file — AU applies your brand template without changing any content' },
                     ].map(m => (
                       <button key={m.key} onClick={() => setSelected(s => ({ ...s, mode: m.key }))}
                         className={`w-full text-left p-4 border transition-all ${selected.mode === m.key ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
                         <div className="flex items-center gap-4">
-                          
                           <div>
                             <div className="text-xs font-semibold text-aurum-black">{m.label}</div>
                             <div className="text-xs text-gray-400 mt-0.5">{m.desc}</div>
                           </div>
-                          {selected.mode === m.key && <div className="ml-auto text-aurum-yellow">âœ“</div>}
+                          {selected.mode === m.key && <div className="ml-auto text-aurum-yellow">✓</div>}
                         </div>
                       </button>
                     ))}
@@ -331,7 +329,7 @@ function DocumentsInner() {
                   </button>
                 )}
                 <div className="flex-1"/>
-                {step < 3 ? (
+                {step < 4 ? (
                   <button onClick={handleNext} disabled={!canNext()}
                     className="bg-aurum-black text-white px-8 py-3 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-40">
                     Continue
@@ -339,7 +337,7 @@ function DocumentsInner() {
                 ) : (
                   <button onClick={handleCreate} disabled={!canNext()}
                     className="bg-aurum-yellow text-aurum-black px-8 py-3 text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-40">
-                    Create document â†’
+                    Create document →
                   </button>
                 )}
               </div>
@@ -358,5 +356,3 @@ export default function DocumentsPage() {
     </Suspense>
   )
 }
-
-

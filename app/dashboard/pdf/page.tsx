@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -40,6 +40,7 @@ function PDFStudioInner() {
   const brandParam = searchParams.get('brand')
 
   const docType = DOC_TYPES[docTypeParam] || DOC_TYPES.report
+  const isPlaceMode = searchParams.get('mode') === 'place'
 
   const [brands, setBrands] = useState<Brand[]>([])
   const [brand, setBrand] = useState<Brand | null>(null)
@@ -74,7 +75,7 @@ function PDFStudioInner() {
   function selectBrand(b: Brand) {
     setBrand(b); setDocSpec(null)
     setMessages([{ role:'au', type:'text',
-      content: `Brand loaded: **${b.name}** Â· ${docType.label}\n\nIdentity active â€” ${b.primary_color} Â· ${b.secondary_color} Â· ${b.accent_color} Â· ${b.font_heading} Â· ${b.tone}.\n\nThis document will follow the **${docType.label}** format: ${docType.sections}.\n\nTell me what this ${docType.label.toLowerCase()} is for, or paste your rough content and I will refine it to institutional standard.`
+      content: `Brand loaded: **${b.name}** · ${docType.label}\n\nIdentity active — ${b.primary_color} · ${b.secondary_color} · ${b.accent_color} · ${b.font_heading} · ${b.tone}.\n\nThis document will follow the **${docType.label}** format: ${docType.sections}.\n\nTell me what this ${docType.label.toLowerCase()} is for, or paste your rough content and I will refine it to institutional standard.`
     }])
   }
 
@@ -82,11 +83,22 @@ function PDFStudioInner() {
     const f = e.target.files?.[0]; if (!f) return
     setUploadedName(f.name)
     setUploadedFile(f)
-    if (f.type === 'text/plain') { setUploadedText(await f.text()) } else { setUploadedText('') }
-    setMessages(prev => [...prev,
-      { role:'user', content:`Uploaded: ${f.name}`, type:'text' },
-      { role:'au', content:`Reference **${f.name}** received. I will use its content as the basis for your ${docType.label}. Tell me your specific requirements.`, type:'text' }
-    ])
+    if (f.type === 'text/plain') {
+      const text = await f.text()
+      setUploadedText(text)
+      setMessages(prev => [...prev,
+        { role:'user', content:`Uploaded: ${f.name}`, type:'text' },
+        { role:'au', content:`Reference **${f.name}** received. I will use its content as the basis for your ${docType.label}. Tell me your specific requirements.`, type:'text' }
+      ])
+    } else {
+      setUploadedText('')
+      setMessages(prev => [...prev,
+        { role:'user', content:`Uploaded: ${f.name}`, type:'text' },
+        { role:'au', content:`I have noted **${f.name}** as your reference document.
+
+To use its content, please **paste the key data or text** from the document into the chat below — figures, sections, or the full text. I will then analyze it and build your ${docType.label} around it at institutional quality.`, type:'text' }
+      ])
+    }
   }
 
   async function send() {
@@ -98,21 +110,30 @@ function PDFStudioInner() {
 
     try {
       const today = new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'})
-      const sys = `You are AU, an elite institutional document strategist for AU Studio. You operate at BlackRock / McKinsey / Goldman Sachs level.
+      const sys = isPlaceMode ? `You are AU, a document layout specialist for AU Studio. Your ONLY job in this session is cosmetic — applying brand templates and adjusting visual layout.
+
+BRAND: ${brand?.name} · Colors: ${brand?.primary_color} / ${brand?.secondary_color} / ${brand?.accent_color}
+
+CRITICAL RULES:
+1. NEVER rewrite, rephrase, correct, or change any content the user has provided
+2. NEVER fix grammar or improve language
+3. ONLY respond to requests about visual layout, section order, styling, spacing
+4. If user asks you to change content, politely decline and remind them this is Place as-is mode
+5. When content is uploaded, confirm it and ask about layout preferences only` : `You are AU, an elite institutional document strategist for AU Studio. You operate at BlackRock / McKinsey / Goldman Sachs level.
 
 DOCUMENT TYPE: ${docType.label}
 DOCUMENT PURPOSE: ${docType.description}
 SUGGESTED SECTIONS: ${docType.sections}
 
-BRAND: ${brand.name} (${brand.legal_name||brand.name}) Â· ${brand.industry}
-COLORS: Primary ${brand.primary_color} Â· Secondary ${brand.secondary_color} Â· Accent ${brand.accent_color}
+BRAND: ${brand.name} (${brand.legal_name||brand.name}) · ${brand.industry}
+COLORS: Primary ${brand.primary_color} · Secondary ${brand.secondary_color} · Accent ${brand.accent_color}
 FONTS: ${brand.font_heading} headings / ${brand.font_body} body
 TONE: ${brand.tone}
 DATE: ${today}
 
 YOUR ROLE:
 1. CREATE ${docType.label}s from briefs at the highest institutional standard
-2. REFINE rough text â€” fix all grammar, elevate vocabulary, sharpen arguments, preserve all facts
+2. REFINE rough text — fix all grammar, elevate vocabulary, sharpen arguments, preserve all facts
 3. ANALYZE uploaded documents and restructure them professionally
 4. Always maintain ${brand.tone} voice appropriate for ${brand.industry}
 
@@ -138,23 +159,12 @@ WHEN READY produce a brief commentary (2-3 sentences max) then immediately produ
 Follow the suggested sections for this document type. Each section must have 2-4 full paragraphs. No filler. No bullet points in section content. Write as a senior partner at a top-tier firm.`
 
       const history = messages.filter(m=>m.type!=='thinking').map(m=>({role:m.role==='au'?'assistant':'user',content:m.content}))
-      history.push({role:'user', content: uploadedText ? `${msg}\n\n[REFERENCE CONTENT - First 8000 chars]:\n${uploadedText.substring(0, 8000)}` : msg})
+      history.push({role:'user', content: uploadedText ? `${msg}\n\n[REFERENCE CONTENT]:\n${uploadedText}` : msg})
 
-      let res
-      if (uploadedFile && uploadedFile.type === 'application/pdf') {
-        const fd = new FormData()
-        fd.append('briefing', msg)
-        fd.append('type', 'pdf')
-        fd.append('systemPrompt', sys)
-        fd.append('history', JSON.stringify(history))
-        fd.append('file', uploadedFile)
-        res = await fetch('/api/analyze-brief', { method:'POST', body: fd })
-      } else {
-        res = await fetch('/api/analyze-brief', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({briefing:msg, type:'pdf', systemPrompt:sys, history})
-        })
-      }
+      const res = await fetch('/api/analyze-brief', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({briefing:msg, type:'pdf', systemPrompt:sys, history})
+      })
       const data = await res.json()
       setMessages(prev => prev.filter(m=>m.type!=='thinking'))
 
@@ -188,7 +198,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
       const S = hex(brand.secondary_color)
       const A = hex(brand.accent_color)
 
-      // â”€â”€ COVER â”€â”€
+      // ── COVER ──
       doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,H,'F')
       doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,6,H,'F')
       doc.setFillColor(A.r,A.g,A.b); doc.rect(W-60,0,60,8,'F')
@@ -238,7 +248,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
       doc.setTextColor(100,100,100); doc.setFontSize(7); doc.setFont('helvetica','normal')
       doc.text(docSpec.metadata.legal_name||brand.name, M, H-11)
 
-      // â”€â”€ TABLE OF CONTENTS â”€â”€
+      // ── TABLE OF CONTENTS ──
       doc.addPage()
       doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,14,'F')
       doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,6,14,'F')
@@ -268,7 +278,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
       doc.setTextColor(130,130,130); doc.setFontSize(7)
       doc.text(docSpec.metadata.date, M, H-4); doc.text('2', W-M, H-4, {align:'right'})
 
-      // â”€â”€ CONTENT PAGES â”€â”€
+      // ── CONTENT PAGES ──
       docSpec.sections.forEach((section,idx)=>{
         doc.addPage()
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,14,'F')
@@ -333,7 +343,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
             title: docSpec.title, subtitle: docSpec.subtitle,
             sections: docSpec.sections, metadata: docSpec.metadata, created_by: user?.id
           })
-          setMessages(prev => [...prev, {role:'au', content:`âœ“ **${docSpec.title}** downloaded and saved as **v${newVersion}**. Find it in Documents. Would you like to revise any section?`, type:'text'}])
+          setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded and saved as **v${newVersion}**. Find it in Documents. Would you like to revise any section?`, type:'text'}])
         } else {
           const { data: newDoc } = await supabase.from('documents').insert({
             title: docSpec.title, subtitle: docSpec.subtitle, doc_type: docTypeParam,
@@ -347,10 +357,10 @@ Follow the suggested sections for this document type. Each section must have 2-4
               sections: docSpec.sections, metadata: docSpec.metadata, created_by: user?.id
             })
           }
-          setMessages(prev => [...prev, {role:'au', content:`âœ“ **${docSpec.title}** downloaded and saved to Documents. Would you like to revise any section or create a variation?`, type:'text'}])
+          setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded and saved to Documents. Would you like to revise any section or create a variation?`, type:'text'}])
         }
       } catch {
-        setMessages(prev => [...prev, {role:'au', content:`âœ“ **${docSpec.title}** downloaded. Would you like to revise any section or create a variation?`, type:'text'}])
+        setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded. Would you like to revise any section or create a variation?`, type:'text'}])
       }
     } catch(err) {
       console.error(err)
@@ -367,7 +377,10 @@ Follow the suggested sections for this document type. Each section must have 2-4
       <div className="bg-white border-b border-gray-200 flex items-center justify-between px-7 py-4 flex-shrink-0">
         <div>
           <div className="text-xs text-gray-400 tracking-widest uppercase">Creation</div>
-          <div className="font-bebas text-2xl text-aurum-black tracking-wide">{docType.label}</div>
+          <div className="flex items-center gap-3">
+            <div className="font-bebas text-2xl text-aurum-black tracking-wide">{docType.label}</div>
+            {isPlaceMode && <span className="text-xs bg-aurum-yellow text-aurum-black px-2 py-0.5 font-bold">PLACE AS-IS</span>}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <select onChange={e => { const b = brands.find(x=>x.id===e.target.value); if(b) selectBrand(b) }}
@@ -386,7 +399,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
           {docSpec && (
             <button onClick={generatePDF} disabled={generating}
               className="bg-aurum-black text-white px-5 py-2 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50">
-              {generating ? 'Generating...' : 'â†“ Download PDF'}
+              {generating ? 'Generating...' : '↓ Download PDF'}
             </button>
           )}
           {!brands.length && (
@@ -418,11 +431,11 @@ Follow the suggested sections for this document type. Each section must have 2-4
                     <div>
                       <div className="text-xs text-gray-400 uppercase tracking-wide">{docType.label} ready</div>
                       <div className="text-sm font-medium text-aurum-yellow">{docSpec?.title}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{docSpec?.sections.length} sections Â· {docSpec?.metadata.date}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{docSpec?.sections.length} sections · {docSpec?.metadata.date}</div>
                     </div>
                     <button onClick={generatePDF} disabled={generating}
                       className="ml-auto bg-aurum-yellow text-aurum-black px-3 py-1.5 text-xs font-bold hover:opacity-90 disabled:opacity-50">
-                      {generating?'...':'â†“ PDF'}
+                      {generating?'...':'↓ PDF'}
                     </button>
                   </div>
                 ) : (
@@ -439,7 +452,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
               <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 bg-gray-50 border border-gray-200 px-3 py-2">
                 <span className="bg-aurum-yellow text-aurum-black px-1.5 py-0.5 font-bold text-xs">REF</span>
                 <span>{uploadedName}</span>
-                <button onClick={()=>{setUploadedName('');setUploadedText('');setUploadedFile(null)}} className="ml-auto text-gray-400 hover:text-gray-600">âœ•</button>
+                <button onClick={()=>{setUploadedName('');setUploadedText('');setUploadedFile(null)}} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
               </div>
             )}
             <div className="flex gap-3 items-end">
@@ -449,14 +462,14 @@ Follow the suggested sections for this document type. Each section must have 2-4
               <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx" className="hidden" onChange={handleFile}/>
               <textarea value={input} onChange={e=>setInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
-                placeholder={`Describe your ${docType.label.toLowerCase()} Â· paste rough text to refine Â· ask AU to improve any section...`}
+                placeholder={`Describe your ${docType.label.toLowerCase()} · paste rough text to refine · ask AU to improve any section...`}
                 rows={2} className="flex-1 border border-gray-200 px-4 py-3 text-sm text-aurum-black resize-none outline-none focus:border-aurum-black placeholder-gray-300"/>
               <button onClick={send} disabled={loading||!input.trim()}
                 className="bg-aurum-black text-white px-5 py-3 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-40 flex-shrink-0">
                 Send
               </button>
             </div>
-            <div className="text-xs text-gray-300 mt-2">AU creates institutional {docType.label.toLowerCase()}s Â· {docType.description}</div>
+            <div className="text-xs text-gray-300 mt-2">AU creates institutional {docType.label.toLowerCase()}s · {docType.description}</div>
           </div>
         </div>
 
@@ -490,7 +503,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
             <div className="px-5 py-4 border-t border-gray-200">
               <button onClick={generatePDF} disabled={generating}
                 className="w-full bg-aurum-black text-white py-3 text-xs font-bold tracking-widest hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50">
-                {generating?'GENERATING...':'â†“ GENERATE PDF'}
+                {generating?'GENERATING...':'↓ GENERATE PDF'}
               </button>
             </div>
           </div>
@@ -507,4 +520,3 @@ export default function PDFPage() {
     </Suspense>
   )
 }
-
