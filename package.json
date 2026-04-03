@@ -18,7 +18,8 @@
                          "pptxgenjs":  "^3.12.0",
                          "replicate":  "^0.25.0",
                          "jspdf":  "^2.5.1",
-                         "pdfjs-dist":  "^3.11.174"
+                         "pdfjs-dist":  "^3.11.174",
+                         "mammoth":  "^1.6.0"
                      },
     "devDependencies":  {
                             "@types/node":  "^20",
