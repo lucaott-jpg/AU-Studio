@@ -160,7 +160,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
         } catch {}
       }
 
-      function slideHeader(company: string) {
+      const slideHeader = (company: string) => {
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,10,'F')
         doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,4,10,'F')
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(6.5); doc.setFont('helvetica','bold')
@@ -169,7 +169,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
         doc.text(deckSpec!.metadata.date, W-M, 7, {align:'right'})
       }
 
-      function slideFooter(num: number) {
+      const slideFooter = (num: number) => {
         doc.setFillColor(A.r,A.g,A.b); doc.rect(0,H-8,W,1,'F')
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,H-7,W,7,'F')
         doc.setTextColor(100,100,100); doc.setFontSize(6.5)
