@@ -2,21 +2,15 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { useState } from 'react'
 
 const navItems = [
-  { label: 'Workspaces', type: 'section' },
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Team area', href: '/dashboard/team', badge: '3' },
-  { label: 'Publication', href: '/dashboard/publication' },
-  { label: 'My workspace', href: '/dashboard/workspace' },
-  { label: 'Brand Profiles', type: 'section' },
-  { label: 'Brands', href: '/dashboard/brands' },
-  { label: 'Logo studio', href: '/dashboard/logo-studio' },
-  { label: 'Creation', type: 'section' },
-  { label: 'PDF Studio', href: '/dashboard/pdf' },
-  { label: 'Pitch Deck', href: '/dashboard/pitch-deck' },
-  { label: 'Presentations', href: '/dashboard/presentations' },
-  { label: 'Images', href: '/dashboard/images' },
+  { label: 'Dashboard',  href: '/dashboard',           icon: '▪' },
+  { label: 'Deals',      href: '/dashboard/deals',      icon: '◈' },
+  { label: 'Brands',     href: '/dashboard/brands',     icon: '◉' },
+  { label: 'Documents',  href: '/dashboard/documents',  icon: '▤' },
+  { label: 'AU Studio',  href: '/dashboard/au-studio',  icon: '✦' },
+  { label: 'Settings',   href: '/dashboard/settings',   icon: '◎' },
 ]
 
 export default function Sidebar() {
@@ -31,49 +25,45 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-52 bg-aurum-black flex flex-col flex-shrink-0 min-h-screen">
-      <div className="px-5 py-5 border-b border-white/10">
-        <div className="font-bebas text-aurum-yellow tracking-widest text-xl">AU Studio</div>
-        <div className="text-xs text-gray-600 tracking-widest uppercase mt-0.5">Creative Hub</div>
+    <aside className="w-56 bg-aurum-black flex flex-col flex-shrink-0 min-h-screen border-r border-white/5">
+      {/* Logo */}
+      <div className="px-6 py-6 border-b border-white/10">
+        <div className="font-bebas text-aurum-yellow tracking-widest text-2xl leading-none">AU</div>
+        <div className="text-xs text-gray-600 tracking-widest uppercase mt-0.5">Studio</div>
       </div>
 
-      <nav className="flex-1 py-2">
-        {navItems.map((item, i) => {
-          if (item.type === 'section') {
-            return (
-              <div key={i} className="px-5 pt-4 pb-1 text-xs text-gray-600 tracking-widest uppercase">
-                {item.label}
-              </div>
-            )
-          }
-          const isActive = pathname === item.href
+      {/* New Document CTA */}
+      <div className="px-4 py-4 border-b border-white/5">
+        <button
+          onClick={() => router.push('/dashboard/documents?new=1')}
+          className="w-full bg-aurum-yellow text-aurum-black py-2.5 text-xs font-bold tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+          <span>+</span> New Document
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 py-3">
+        {navItems.map((item) => {
+          const active = item.href === '/dashboard'
+            ? pathname === '/dashboard'
+            : pathname.startsWith(item.href)
           return (
-            <button
-              key={item.href}
-              onClick={() => router.push(item.href!)}
-              className={`w-full flex items-center gap-2.5 px-5 py-2.5 text-xs transition-all border-l-2 text-left
-                ${isActive
-                  ? 'text-aurum-yellow border-aurum-yellow bg-yellow-950/30'
-                  : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/5'
-                }`}
-            >
-              <span className="w-1 h-1 rounded-full bg-current flex-shrink-0" />
-              <span className="flex-1">{item.label}</span>
-              {item.badge && (
-                <span className="bg-aurum-yellow text-aurum-black text-xs font-medium px-1.5 py-0.5 rounded-full leading-none">
-                  {item.badge}
-                </span>
-              )}
+            <button key={item.href} onClick={() => router.push(item.href)}
+              className={`w-full flex items-center gap-3 px-6 py-2.5 text-xs transition-all text-left
+                ${active
+                  ? 'text-aurum-yellow bg-white/5 border-r-2 border-aurum-yellow'
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/3'
+                }`}>
+              <span className="text-base leading-none">{item.icon}</span>
+              <span className="font-medium">{item.label}</span>
             </button>
           )
         })}
       </nav>
 
-      <div className="border-t border-white/10 p-4">
-        <button
-          onClick={handleSignOut}
-          className="w-full text-left text-xs text-gray-600 hover:text-gray-300 transition-colors px-1 py-1.5"
-        >
+      {/* User */}
+      <div className="border-t border-white/10 px-6 py-4">
+        <button onClick={handleSignOut} className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
           Sign out
         </button>
       </div>

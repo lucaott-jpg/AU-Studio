@@ -301,7 +301,44 @@ Follow the suggested sections for this document type. Each section must have 2-4
       })
 
       doc.save(`${docSpec.title.replace(/\s+/g,'_')}_${brand.name}_AU.pdf`)
-      setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded. Would you like to revise any section or create a variation?`, type:'text'}])
+
+      // Save to Supabase
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        // Check if document already exists (same title + brand + type)
+        const { data: existing } = await supabase.from('documents')
+          .select('id,current_version').eq('title', docSpec.title).eq('brand_id', brand.id).eq('doc_type', docTypeParam).eq('created_by', user?.id).single()
+
+        if (existing) {
+          const newVersion = existing.current_version + 1
+          await supabase.from('documents').update({
+            subtitle: docSpec.subtitle, sections: docSpec.sections,
+            metadata: docSpec.metadata, current_version: newVersion, updated_at: new Date().toISOString()
+          }).eq('id', existing.id)
+          await supabase.from('document_versions').insert({
+            document_id: existing.id, version_number: newVersion,
+            title: docSpec.title, subtitle: docSpec.subtitle,
+            sections: docSpec.sections, metadata: docSpec.metadata, created_by: user?.id
+          })
+          setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded and saved as **v${newVersion}**. Find it in Documents. Would you like to revise any section?`, type:'text'}])
+        } else {
+          const { data: newDoc } = await supabase.from('documents').insert({
+            title: docSpec.title, subtitle: docSpec.subtitle, doc_type: docTypeParam,
+            brand_id: brand.id, created_by: user?.id, status: 'draft',
+            current_version: 1, sections: docSpec.sections, metadata: docSpec.metadata
+          }).select('id').single()
+          if (newDoc) {
+            await supabase.from('document_versions').insert({
+              document_id: newDoc.id, version_number: 1,
+              title: docSpec.title, subtitle: docSpec.subtitle,
+              sections: docSpec.sections, metadata: docSpec.metadata, created_by: user?.id
+            })
+          }
+          setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded and saved to Documents. Would you like to revise any section or create a variation?`, type:'text'}])
+        }
+      } catch {
+        setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded. Would you like to revise any section or create a variation?`, type:'text'}])
+      }
     } catch(err) {
       console.error(err)
       setMessages(prev => [...prev, {role:'au', content:'PDF generation error. Please try again.', type:'text'}])
