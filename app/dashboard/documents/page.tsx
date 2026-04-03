@@ -302,7 +302,6 @@ function DocumentsInner() {
                   <div className="space-y-2">
                     {[
                       { key: 'ai', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
-                      { key: 'blank', label: 'Start blank', desc: 'Open the editor with an empty document and write from scratch' },
                       { key: 'upload', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
                       { key: 'place', label: 'Place as-is', desc: 'Upload a file — AU applies your brand template without changing any content' },
                     ].map(m => (
