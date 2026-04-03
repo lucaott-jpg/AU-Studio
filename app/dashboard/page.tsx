@@ -1,4 +1,7 @@
-import { createClient } from '@/lib/supabase-server'
+﻿'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase-browser'
 
 const metrics = [
   { val: '24', label: 'Active projects', delta: '+3 this week', accent: true },
@@ -10,8 +13,8 @@ const metrics = [
 const recentProjects = [
   { type: 'PDF', name: 'Institutional report Q2 2025', team: 'Marketing', status: 'Published', statusStyle: 'text-green-700 bg-green-50 border-green-200' },
   { type: 'PPT', name: 'Investor presentation', team: 'Ana Lima', status: 'In progress', statusStyle: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
-  { type: 'LOGO', name: 'Rebranding — logo variations', team: 'Logo Studio', status: 'In review', statusStyle: 'text-red-700 bg-red-50 border-red-200' },
-  { type: 'IMG', name: 'Visual campaign — product launch', team: 'Carlos Reis', status: 'In progress', statusStyle: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
+  { type: 'LOGO', name: 'Rebranding â€” logo variations', team: 'Logo Studio', status: 'In review', statusStyle: 'text-red-700 bg-red-50 border-red-200' },
+  { type: 'IMG', name: 'Visual campaign â€” product launch', team: 'Carlos Reis', status: 'In progress', statusStyle: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
 ]
 
 const typeStyles: Record<string, string> = {
@@ -128,7 +131,7 @@ export default async function DashboardPage() {
                   <div key={item.title} className="py-2.5 flex gap-2.5 items-start">
                     <div className="w-1.5 h-1.5 rounded-full bg-aurum-yellow flex-shrink-0 mt-1.5" />
                     <div className="text-xs text-gray-500 leading-relaxed">
-                      <span className="font-medium text-aurum-black">{item.title}</span> — {item.text}
+                      <span className="font-medium text-aurum-black">{item.title}</span> â€” {item.text}
                     </div>
                   </div>
                 ))}
@@ -186,3 +189,4 @@ export default async function DashboardPage() {
     </div>
   )
 }
+
