@@ -71,7 +71,7 @@ function DocumentsInner() {
   }
 
   function handleNext() {
-    if (step < 4) setStep(s => s + 1)
+    if (step < 3) setStep(s => s + 1)
   }
 
   function handleBack() {
@@ -81,8 +81,7 @@ function DocumentsInner() {
   function canNext() {
     if (step === 1) return !!selected.type
     if (step === 2) return !!selected.brand
-    if (step === 3) return true // deal is optional
-    if (step === 4) return !!selected.mode
+    if (step === 3) return !!selected.mode
     return false
   }
 
@@ -235,10 +234,10 @@ function DocumentsInner() {
               <div>
                 <div className="font-bebas text-aurum-yellow tracking-widest text-lg">New Document</div>
                 <div className="flex items-center gap-2 mt-1">
-                  {[1,2,3,4].map(s => (
+                  {[1,2,3].map(s => (
                     <div key={s} className={`h-0.5 w-8 transition-colors ${s <= step ? 'bg-aurum-yellow' : 'bg-white/20'}`}/>
                   ))}
-                  <span className="text-xs text-gray-500 ml-1">Step {step} of 4</span>
+                  <span className="text-xs text-gray-500 ml-1">Step {step} of 3</span>
                 </div>
               </div>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
@@ -297,37 +296,6 @@ function DocumentsInner() {
 
               {/* Step 3: Deal */}
               {step === 3 && (
-                <div>
-                  <div className="text-sm font-medium text-aurum-black mb-1">Select deal <span className="text-gray-400 font-normal">(optional)</span></div>
-                  <div className="text-xs text-gray-400 mb-4">Link this document to a deal so AU can use its data automatically.</div>
-                  <button onClick={() => setSelected(s => ({ ...s, deal: '' }))}
-                    className={`w-full text-left p-4 border mb-2 transition-all ${!selected.deal ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <div className="text-xs font-medium text-aurum-black">No deal — standalone document</div>
-                  </button>
-                  {deals.length > 0 && (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {deals.map(deal => (
-                        <button key={deal.id} onClick={() => setSelected(s => ({ ...s, deal: deal.id }))}
-                          className={`w-full text-left p-4 border transition-all ${selected.deal === deal.id ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs font-semibold text-aurum-black">{deal.name}</div>
-                              <div className="text-xs text-gray-400 mt-0.5">{deal.company} · {deal.deal_type}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-400">{deal.stage}</span>
-                              {selected.deal === deal.id && <span className="text-aurum-yellow">✓</span>}
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Step 4: Mode */}
-              {step === 4 && (
                 <div>
                   <div className="text-sm font-medium text-aurum-black mb-1">How would you like to start?</div>
                   <div className="text-xs text-gray-400 mb-4">
