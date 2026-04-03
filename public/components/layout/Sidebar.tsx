@@ -4,10 +4,10 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 const navItems = [
-  { label: 'Workspaces', type: 'section' },
+  { label: 'Overview', type: 'section' },
   { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Brand Profiles', type: 'section' },
-  { label: 'Brands', href: '/dashboard/brands' },
+  { label: 'Documents', href: '/dashboard/documents' },
+  { label: 'Brand Profiles', href: '/dashboard/brands' },
   { label: 'Reports & Analysis', type: 'section' },
   { label: 'Report', href: '/dashboard/pdf?type=report' },
   { label: 'Executive Memo', href: '/dashboard/pdf?type=memo' },
@@ -33,15 +33,14 @@ export default function Sidebar() {
   }
 
   function isActive(href: string) {
-    if (href === '/dashboard') return pathname === '/dashboard'
     const path = href.split('?')[0]
-    const param = href.includes('?') ? href.split('?')[1] : null
-    if (param && pathname.includes(path)) {
-      if (typeof window !== 'undefined') {
-        return window.location.search.includes(param)
-      }
+    const query = href.includes('?') ? href.split('?')[1] : null
+    if (href === '/dashboard') return pathname === '/dashboard'
+    if (query && pathname === path) {
+      if (typeof window !== 'undefined') return window.location.search.includes(query)
+      return false
     }
-    return pathname === path && !href.includes('?')
+    return pathname === path && !query
   }
 
   return (
@@ -54,18 +53,14 @@ export default function Sidebar() {
       <nav className="flex-1 py-2 overflow-y-auto">
         {navItems.map((item, i) => {
           if (item.type === 'section') {
-            return (
-              <div key={i} className="px-5 pt-4 pb-1 text-xs text-gray-600 tracking-widest uppercase">
-                {item.label}
-              </div>
-            )
+            return <div key={i} className="px-5 pt-4 pb-1 text-xs text-gray-600 tracking-widest uppercase">{item.label}</div>
           }
           const active = isActive(item.href!)
           return (
-            <button key={item.href} onClick={() => router.push(item.href!)}
+            <button key={i} onClick={() => router.push(item.href!)}
               className={`w-full flex items-center gap-2.5 px-5 py-2 text-xs transition-all border-l-2 text-left
                 ${active ? 'text-aurum-yellow border-aurum-yellow bg-yellow-950/30' : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/5'}`}>
-              <span className="w-1 h-1 rounded-full bg-current flex-shrink-0" />
+              <span className="w-1 h-1 rounded-full bg-current flex-shrink-0"/>
               <span className="flex-1">{item.label}</span>
             </button>
           )
