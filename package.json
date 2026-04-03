@@ -16,7 +16,8 @@
     "react": "^18",
     "react-dom": "^18",
     "pptxgenjs": "^3.12.0",
-    "replicate": "^0.25.0"
+    "replicate": "^0.25.0",
+    "jspdf": "^2.5.1"
   },
   "devDependencies": {
     "@types/node": "^20",

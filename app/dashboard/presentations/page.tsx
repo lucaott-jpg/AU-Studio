@@ -66,11 +66,11 @@ export default function PresentationsPage() {
             <textarea
               value={briefing}
               onChange={e => setBriefing(e.target.value)}
-              placeholder="Describe the goal of this presentation. Claude will analyze and suggest structure, tone, and visual direction..."
+              placeholder="Describe the goal of this presentation. AU will analyze and suggest structure, tone, and visual direction..."
               className="w-full border-none outline-none text-sm text-gray-700 resize-none min-h-[80px] leading-relaxed placeholder-gray-300"
             />
             <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
-              <span className="text-xs bg-aurum-yellow text-aurum-black px-2 py-1 font-medium tracking-wide">Claude AI</span>
+              <span className="text-xs bg-aurum-yellow text-aurum-black px-2 py-1 font-medium tracking-wide">AU</span>
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing || !briefing.trim()}
@@ -114,7 +114,7 @@ export default function PresentationsPage() {
             <div className="section-label">AI tools</div>
             <div className="grid grid-cols-2 gap-2">
               <div className="border border-green-200 bg-green-50 p-3 cursor-pointer hover:border-green-400 transition-colors">
-                <div className="text-xs text-green-700 font-medium mb-1">Claude</div>
+                <div className="text-xs text-green-700 font-medium mb-1">AU</div>
                 <div className="text-xs text-gray-400">Text & structure</div>
               </div>
               <div className="border border-indigo-200 bg-indigo-50 p-3 cursor-pointer hover:border-indigo-400 transition-colors">
@@ -124,13 +124,13 @@ export default function PresentationsPage() {
             </div>
           </div>
 
-          {/* Claude analysis results */}
+          {/* AU analysis results */}
           {error && (
             <div className="text-xs text-red-500 bg-red-50 border border-red-200 p-3">{error}</div>
           )}
           {analysis && (
             <div>
-              <div className="section-label">Claude analysis</div>
+              <div className="section-label">AU analysis</div>
               <div className="flex flex-col gap-3">
                 {[
                   { label: 'Structure', val: analysis.structure },
@@ -158,7 +158,7 @@ export default function PresentationsPage() {
           )}
           {!analysis && !error && (
             <div>
-              <div className="section-label">Claude suggestions</div>
+              <div className="section-label">AU suggestions</div>
               <div className="flex flex-col gap-2">
                 {[
                   { label: 'Structure', text: 'Strong opening + 3 visual differentials + 2 detailed cases + clear CTA.' },
