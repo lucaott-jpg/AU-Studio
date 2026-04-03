@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-browser'
@@ -82,7 +82,7 @@ export default function BrandsPage() {
     setSaving(true)
     try {
       const {data:{user}} = await supabase.auth.getUser()
-      const payload = {...form, created_by:user?.id}
+      const payload = { name:form.name, industry:form.industry, tagline:form.tagline, legal_name:form.legal_name, primary_color:form.primary_color, secondary_color:form.secondary_color, accent_color:form.accent_color, font_heading:form.font_heading, font_body:form.font_body, tone:form.tone, logo_url:form.logo_url||null, logo_transparent_url:form.logo_transparent_url||null, created_by:user?.id }
       if (editBrand) { await supabase.from('brands').update(payload).eq('id',editBrand.id) }
       else { await supabase.from('brands').insert(payload) }
       await fetchBrands(); setShowForm(false); setEditBrand(null); resetForm()
@@ -175,7 +175,7 @@ export default function BrandsPage() {
                     <button onClick={()=>openEdit(b)} className="flex-1 border border-gray-200 py-2 text-xs font-medium text-gray-500 hover:border-aurum-black hover:text-aurum-black transition-colors">Edit</button>
                     <a href={`/dashboard/pdf?brand=${b.id}`} className="flex-1 bg-aurum-black text-white py-2 text-xs font-medium text-center hover:bg-aurum-yellow hover:text-aurum-black transition-colors">PDF</a>
                     <a href={`/dashboard/pitch-deck?brand=${b.id}`} className="flex-1 border border-aurum-yellow bg-yellow-50 text-yellow-800 py-2 text-xs font-medium text-center hover:bg-aurum-yellow hover:text-aurum-black transition-colors">Deck</a>
-                    <button onClick={()=>handleDelete(b.id)} className="border border-gray-200 px-3 py-2 text-xs text-red-400 hover:border-red-300 transition-colors">✕</button>
+                    <button onClick={()=>handleDelete(b.id)} className="border border-gray-200 px-3 py-2 text-xs text-red-400 hover:border-red-300 transition-colors">âœ•</button>
                   </div>
                 </div>
               </div>
@@ -190,7 +190,7 @@ export default function BrandsPage() {
           <div className="bg-white w-full max-w-2xl max-h-[92vh] overflow-y-auto">
             <div className="bg-aurum-black px-6 py-4 flex items-center justify-between sticky top-0 z-10">
               <div className="font-bebas text-aurum-yellow tracking-widest text-lg">{editBrand?'Edit Brand Profile':'New Brand Profile'}</div>
-              <button onClick={()=>{setShowForm(false);setEditBrand(null)}} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+              <button onClick={()=>{setShowForm(false);setEditBrand(null)}} className="text-gray-400 hover:text-white text-xl leading-none">âœ•</button>
             </div>
 
             <div className="p-6 space-y-6">
@@ -235,17 +235,17 @@ export default function BrandsPage() {
                     {form.logo_url && !form.logo_transparent_url && (
                       <button onClick={handleRemoveBg} disabled={removingBg}
                         className="w-full mt-2 border border-aurum-yellow bg-yellow-50 text-yellow-800 py-2 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50">
-                        {removingBg?'Removing background...':'✦ Remove background'}
+                        {removingBg?'Removing background...':'âœ¦ Remove background'}
                       </button>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Colors — 3 only, with hints */}
+              {/* Colors â€” 3 only, with hints */}
               <div>
                 <div className="text-xs text-gray-400 uppercase tracking-widest mb-1 pb-2 border-b border-gray-100 font-semibold">Brand Colors</div>
-                <div className="text-xs text-gray-400 mb-3">You define 3 colors. AU decides placement — covers, headers, accents, footers.</div>
+                <div className="text-xs text-gray-400 mb-3">You define 3 colors. AU decides placement â€” covers, headers, accents, footers.</div>
                 <div className="grid grid-cols-3 gap-4">
                   {COLOR_HINTS.map(({key,label,desc})=>(
                     <div key={key}>
@@ -309,3 +309,4 @@ export default function BrandsPage() {
     </div>
   )
 }
+
