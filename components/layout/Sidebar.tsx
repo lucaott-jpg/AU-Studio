@@ -9,11 +9,14 @@ const navItems = [
   { label: 'Team area', href: '/dashboard/team', badge: '3' },
   { label: 'Publication', href: '/dashboard/publication' },
   { label: 'My workspace', href: '/dashboard/workspace' },
+  { label: 'Brand Profiles', type: 'section' },
+  { label: 'Brands', href: '/dashboard/brands' },
+  { label: 'Logo studio', href: '/dashboard/logo-studio' },
   { label: 'Creation', type: 'section' },
-  { label: 'PDF', href: '/dashboard/pdf' },
+  { label: 'PDF Studio', href: '/dashboard/pdf' },
+  { label: 'Pitch Deck', href: '/dashboard/pitch-deck' },
   { label: 'Presentations', href: '/dashboard/presentations' },
   { label: 'Images', href: '/dashboard/images' },
-  { label: 'Logo studio', href: '/dashboard/logo-studio' },
 ]
 
 export default function Sidebar() {

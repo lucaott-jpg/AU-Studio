@@ -1,524 +1,424 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createClient } from '@/lib/supabase-browser'
 
-interface Message {
-  role: 'user' | 'au'
-  content: string
-  type?: 'text' | 'document-ready' | 'thinking'
+interface Brand {
+  id: string; name: string; industry: string; tagline: string; legal_name: string
+  primary_color: string; secondary_color: string; accent_color: string
+  font_heading: string; font_body: string; tone: string
+  logo_url: string | null; logo_transparent_url: string | null
 }
 
-interface DocumentSpec {
-  title: string
+interface Message { role: 'user' | 'au'; content: string; type?: 'text' | 'document-ready' | 'thinking' }
+interface DocSpec {
+  title: string; subtitle?: string
   sections: { heading: string; content: string }[]
-  metadata: { company: string; date: string; prepared_by: string; confidential: boolean }
+  metadata: { company: string; legal_name: string; date: string; prepared_by: string; confidential: boolean }
+}
+
+function hex(h: string) {
+  const c = h.replace('#', '')
+  return { r: parseInt(c.slice(0,2),16)||0, g: parseInt(c.slice(2,4),16)||0, b: parseInt(c.slice(4,6),16)||0 }
 }
 
 export default function PDFPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'au',
-      content: 'Hello. I\'m AU, your institutional document specialist. I create professional PDFs — reports, proposals, executive briefs, and presentations.\n\nTo get started, tell me what document you need. You can:\n\n• **Describe it** — "Create a quarterly report for our investors"\n• **Upload a reference** — drop a file and I\'ll use it as a base\n• **Give me specifications** — title, sections, tone, audience\n\nWhat would you like to create today?',
-      type: 'text'
-    }
-  ])
+  const [brands, setBrands] = useState<Brand[]>([])
+  const [brand, setBrand] = useState<Brand | null>(null)
+  const [messages, setMessages] = useState<Message[]>([{ role:'au', content:'Select a brand profile to begin creating institutional documents.', type:'text' }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [docSpec, setDocSpec] = useState<DocumentSpec | null>(null)
+  const [uploadedText, setUploadedText] = useState('')
+  const [uploadedName, setUploadedName] = useState('')
+  const [docSpec, setDocSpec] = useState<DocSpec | null>(null)
   const [generating, setGenerating] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const supabase = createClient()
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  useEffect(() => { supabase.from('brands').select('*').order('name').then(({data}) => setBrands(data||[])) }, [])
+  useEffect(() => { bottomRef.current?.scrollIntoView({behavior:'smooth'}) }, [messages])
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadedFile(file)
-    setMessages(prev => [...prev, {
-      role: 'user',
-      content: `📎 Uploaded reference: ${file.name}`,
-      type: 'text'
-    }, {
-      role: 'au',
-      content: `I've received **${file.name}** as your reference document. I'll use its structure, tone, and content as the foundation for your new document.\n\nNow tell me: what would you like me to create based on this? For example:\n• "Create a similar report for Q2 2025"\n• "Adapt this as an investor proposal"\n• "Reformat this as an executive brief"`,
-      type: 'text'
-    }])
+  function selectBrand(b: Brand) {
+    setBrand(b); setDocSpec(null)
+    setMessages([{ role:'au', type:'text', content:`Brand loaded: **${b.name}**\n\nIdentity active — ${b.primary_color} · ${b.secondary_color} · ${b.accent_color} · ${b.font_heading} · ${b.tone}.\n\nWhat would you like to create?\n\n• Describe a document — "Q1 2026 investor report"\n• Paste rough text to refine\n• Upload a reference file\n• Mix all three` }])
   }
 
-  async function handleSend() {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return
+    setUploadedName(f.name)
+    if (f.type === 'text/plain') { setUploadedText(await f.text()) } else { setUploadedText(`[File: ${f.name}]`) }
+    setMessages(prev => [...prev,
+      { role:'user', content:`Uploaded: ${f.name}`, type:'text' },
+      { role:'au', content:`Reference **${f.name}** received. Tell me what to create from it.`, type:'text' }
+    ])
+  }
+
+  async function send() {
     if (!input.trim() || loading) return
-
-    const userMessage = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMessage, type: 'text' }])
+    if (!brand) { setMessages(prev => [...prev, {role:'au', content:'Please select a brand profile first.', type:'text'}]); return }
+    const msg = input.trim(); setInput('')
+    setMessages(prev => [...prev, {role:'user', content:msg, type:'text'}, {role:'au', content:'', type:'thinking'}])
     setLoading(true)
-
-    // Add thinking indicator
-    setMessages(prev => [...prev, { role: 'au', content: '', type: 'thinking' }])
-
     try {
-      const systemPrompt = `You are AU, an elite institutional document specialist for AU Studio, an internal corporate creative hub. 
-Your role is to help users create professional, polished PDF documents — executive reports, proposals, investor briefs, operational manuals, and institutional presentations.
+      const today = new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'})
+      const sys = `You are AU, an elite institutional document strategist for AU Studio. You operate at BlackRock / McKinsey / Goldman level.
 
-PERSONALITY: Professional, precise, concise. You speak like a senior partner at a top consultancy. Never casual.
+BRAND: ${brand.name} (${brand.legal_name||brand.name}) · ${brand.industry}
+COLORS: Primary ${brand.primary_color} · Secondary ${brand.secondary_color} · Accent ${brand.accent_color}
+FONTS: ${brand.font_heading} headings / ${brand.font_body} body · TONE: ${brand.tone}
+DATE: ${today}
 
-WHEN THE USER DESCRIBES A DOCUMENT THEY WANT:
-1. Ask 2-3 focused clarifying questions if needed (audience, length, key data points)
-2. OR if you have enough information, respond with a JSON block wrapped in <DOCUMENT_SPEC> tags like this:
+CAPABILITIES:
+1. CREATE documents from briefs at the highest institutional standard
+2. REFINE rough text — fix all grammar, elevate vocabulary, sharpen arguments, preserve facts
+3. ANALYZE and restructure uploaded documents professionally
+
+WHEN READY produce commentary then:
 
 <DOCUMENT_SPEC>
 {
   "title": "Document Title",
-  "metadata": {
-    "company": "Company Name or AU Studio",
-    "date": "April 2026",
-    "prepared_by": "AU Studio",
-    "confidential": true
-  },
+  "subtitle": "Subtitle or descriptor",
   "sections": [
-    { "heading": "Executive Summary", "content": "Full paragraph content here..." },
-    { "heading": "Section 2 Title", "content": "Full paragraph content here..." }
-  ]
+    { "heading": "Executive Summary", "content": "2-4 full paragraphs of institutional prose..." }
+  ],
+  "metadata": { "company": "${brand.name}", "legal_name": "${brand.legal_name||brand.name}", "date": "${today}", "prepared_by": "AU Studio", "confidential": true }
 }
 </DOCUMENT_SPEC>
 
-Always include at least 4-6 substantive sections with real, professional content. Make the content institutional quality — data-driven language, formal tone, structured arguments.
+Include 5-8 sections. Each section: 2-4 full paragraphs. No bullet points. Write as a senior partner at a top-tier firm. ${brand.tone} tone throughout.`
 
-If the user uploads a reference, adapt your output to match that document's structure and purpose.
-If the user asks for revisions, update the document spec accordingly.
-Never break character. Always respond as AU.`
+      const history = messages.filter(m=>m.type!=='thinking').map(m=>({role:m.role==='au'?'assistant':'user',content:m.content}))
+      history.push({role:'user', content: uploadedText ? `${msg}\n\n[REFERENCE]:\n${uploadedText}` : msg})
 
-      const conversationHistory = messages
-        .filter(m => m.type !== 'thinking')
-        .map(m => ({
-          role: m.role === 'au' ? 'assistant' : 'user',
-          content: m.content
-        }))
-
-      conversationHistory.push({ role: 'user', content: userMessage })
-
-      const response = await fetch('/api/analyze-brief', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          briefing: userMessage,
-          type: 'pdf',
-          systemPrompt,
-          history: conversationHistory
-        })
-      })
-
-      const data = await response.json()
-
-      // Remove thinking indicator
-      setMessages(prev => prev.filter(m => m.type !== 'thinking'))
+      const res = await fetch('/api/analyze-brief', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({briefing:msg, type:'pdf', systemPrompt:sys, history})})
+      const data = await res.json()
+      setMessages(prev => prev.filter(m=>m.type!=='thinking'))
 
       if (data.rawResponse) {
         const raw = data.rawResponse
-
-        // Check if response contains a document spec
-        const specMatch = raw.match(/<DOCUMENT_SPEC>([\s\S]*?)<\/DOCUMENT_SPEC>/)
-        if (specMatch) {
+        const m = raw.match(/<DOCUMENT_SPEC>([\s\S]*?)<\/DOCUMENT_SPEC>/)
+        if (m) {
           try {
-            const spec = JSON.parse(specMatch[1].trim())
-            setDocSpec(spec)
-
-            const textBefore = raw.replace(/<DOCUMENT_SPEC>[\s\S]*?<\/DOCUMENT_SPEC>/, '').trim()
-
-            setMessages(prev => [...prev, {
-              role: 'au',
-              content: textBefore || 'Your document is ready. Review the preview on the right and click **Generate PDF** to download.',
-              type: 'text'
-            }, {
-              role: 'au',
-              content: `**Document ready:** ${spec.title}`,
-              type: 'document-ready'
-            }])
-          } catch {
-            setMessages(prev => [...prev, { role: 'au', content: raw, type: 'text' }])
-          }
-        } else {
-          setMessages(prev => [...prev, { role: 'au', content: raw, type: 'text' }])
-        }
-      } else {
-        setMessages(prev => [...prev, {
-          role: 'au',
-          content: 'I encountered an issue. Please try again.',
-          type: 'text'
-        }])
+            const spec = JSON.parse(m[1].trim()); setDocSpec(spec)
+            const before = raw.replace(/<DOCUMENT_SPEC>[\s\S]*?<\/DOCUMENT_SPEC>/, '').trim()
+            setMessages(prev => [...prev,
+              {role:'au', content:before||'Document ready. Review the preview and download.', type:'text'},
+              {role:'au', content:`Document ready: ${spec.title}`, type:'document-ready'}
+            ])
+          } catch { setMessages(prev => [...prev, {role:'au', content:raw, type:'text'}]) }
+        } else { setMessages(prev => [...prev, {role:'au', content:raw, type:'text'}]) }
       }
     } catch {
-      setMessages(prev => prev.filter(m => m.type !== 'thinking'))
-      setMessages(prev => [...prev, {
-        role: 'au',
-        content: 'Connection error. Please try again.',
-        type: 'text'
-      }])
-    } finally {
-      setLoading(false)
-    }
+      setMessages(prev => [...prev.filter(m=>m.type!=='thinking'), {role:'au', content:'Connection error. Please try again.', type:'text'}])
+    } finally { setLoading(false) }
   }
 
   async function generatePDF() {
-    if (!docSpec) return
+    if (!docSpec || !brand) return
     setGenerating(true)
-
     try {
-      // Dynamically import jsPDF
       const { jsPDF } = await import('jspdf')
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'})
+      const W=210, H=297, M=22, CW=W-M*2
+      const P = hex(brand.primary_color)
+      const S = hex(brand.secondary_color)
+      const A = hex(brand.accent_color)
 
-      const pageW = 210
-      const pageH = 297
-      const margin = 20
-      const contentW = pageW - margin * 2
-      let y = 0
+      // ── COVER ──
+      // Background: primary color
+      doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,H,'F')
+      // Left accent bar: secondary
+      doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,6,H,'F')
+      // Top right accent block: accent color
+      doc.setFillColor(A.r,A.g,A.b); doc.rect(W-60,0,60,8,'F')
 
-      // ── Cover page ──
-      // Black header bar
-      doc.setFillColor(10, 10, 10)
-      doc.rect(0, 0, pageW, 60, 'F')
+      // Logo
+      const logoUrl = brand.logo_transparent_url || brand.logo_url
+      if (logoUrl) {
+        try {
+          const img = new Image(); img.crossOrigin='anonymous'
+          await new Promise<void>(r => { img.onload=()=>r(); img.onerror=()=>r(); img.src=logoUrl })
+          if (img.naturalWidth>0) {
+            const cv = document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight
+            cv.getContext('2d')!.drawImage(img,0,0)
+            const ratio = Math.min(48/img.naturalWidth, 18/img.naturalHeight)
+            const lw=img.naturalWidth*ratio, lh=img.naturalHeight*ratio
+            doc.addImage(cv.toDataURL('image/png'),'PNG', W-M-lw, 18, lw, lh)
+          }
+        } catch {}
+      }
 
-      // Yellow accent line
-      doc.setFillColor(245, 200, 66)
-      doc.rect(0, 60, pageW, 3, 'F')
+      // Company name: secondary color text
+      doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(9); doc.setFont('helvetica','bold')
+      doc.text(brand.name.toUpperCase(), M, 36)
+      doc.setFillColor(S.r,S.g,S.b); doc.rect(M, 39, 32, 0.7, 'F')
 
-      // Company name
-      doc.setTextColor(245, 200, 66)
-      doc.setFontSize(11)
-      doc.setFont('helvetica', 'bold')
-      doc.text(docSpec.metadata.company.toUpperCase(), margin, 25)
+      // Title: white
+      doc.setTextColor(255,255,255); doc.setFontSize(24); doc.setFont('helvetica','bold')
+      let ty=54
+      doc.splitTextToSize(docSpec.title.toUpperCase(), CW-10).forEach((l:string)=>{doc.text(l,M,ty);ty+=9})
 
-      // Title
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(22)
-      doc.setFont('helvetica', 'bold')
-      const titleLines = doc.splitTextToSize(docSpec.title.toUpperCase(), contentW)
-      doc.text(titleLines, margin, 42)
+      // Subtitle: accent tinted
+      if (docSpec.subtitle) {
+        doc.setFontSize(11); doc.setFont('helvetica','normal')
+        doc.setTextColor(A.r,A.g,A.b)
+        doc.text(doc.splitTextToSize(docSpec.subtitle, CW), M, ty+6)
+      }
 
-      // Metadata block
-      doc.setFillColor(247, 247, 245)
-      doc.rect(0, 63, pageW, 40, 'F')
+      // Cover footer: secondary color bar
+      doc.setFillColor(S.r,S.g,S.b); doc.rect(0,H-46,W,1,'F')
+      doc.setFillColor(10,10,10); doc.rect(0,H-45,W,45,'F')
+      doc.setTextColor(100,100,100); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
+      doc.text('PREPARED BY',M,H-32); doc.text('DATE',88,H-32); doc.text('CLASSIFICATION',148,H-32)
+      doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold')
+      doc.text('AU Studio',M,H-23); doc.text(docSpec.metadata.date,88,H-23)
+      doc.text(docSpec.metadata.confidential?'CONFIDENTIAL':'INTERNAL',148,H-23)
+      doc.setTextColor(100,100,100); doc.setFontSize(7); doc.setFont('helvetica','normal')
+      doc.text(docSpec.metadata.legal_name||brand.name, M, H-11)
 
-      doc.setTextColor(100, 100, 100)
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.text('PREPARED BY', margin, 76)
-      doc.text('DATE', 90, 76)
-      doc.text('CLASSIFICATION', 150, 76)
+      // ── TABLE OF CONTENTS ──
+      doc.addPage()
+      // Header bar: primary
+      doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,14,'F')
+      doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,6,14,'F')
+      doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7.5); doc.setFont('helvetica','bold')
+      doc.text(brand.name.toUpperCase(), 12, 9)
+      doc.setTextColor(130,130,130)
+      doc.text(docSpec.title.toUpperCase().substring(0,52), W-M, 9, {align:'right'})
 
-      doc.setTextColor(10, 10, 10)
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.text(docSpec.metadata.prepared_by, margin, 84)
-      doc.text(docSpec.metadata.date, 90, 84)
-      doc.text(docSpec.metadata.confidential ? 'CONFIDENTIAL' : 'INTERNAL USE', 150, 84)
+      let y=32
+      doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(16); doc.setFont('helvetica','bold')
+      doc.text('CONTENTS', M, y)
+      doc.setFillColor(S.r,S.g,S.b); doc.rect(M, y+3, 20, 1, 'F')
+      y+=14
 
-      // Table of contents
-      y = 120
-      doc.setTextColor(10, 10, 10)
-      doc.setFontSize(13)
-      doc.setFont('helvetica', 'bold')
-      doc.text('TABLE OF CONTENTS', margin, y)
-
-      doc.setFillColor(245, 200, 66)
-      doc.rect(margin, y + 2, 30, 1.5, 'F')
-
-      y += 12
-      docSpec.sections.forEach((section, i) => {
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor(60, 60, 60)
-        doc.text(`${String(i + 1).padStart(2, '0')}  ${section.heading}`, margin, y)
-        doc.setTextColor(200, 200, 200)
-        doc.text(`${i + 2}`, pageW - margin, y, { align: 'right' })
-        y += 8
+      docSpec.sections.forEach((s,i)=>{
+        if(i%2===0){doc.setFillColor(248,248,248);doc.rect(M-2,y-5,CW+4,9,'F')}
+        doc.setFontSize(8.5); doc.setFont('helvetica','bold'); doc.setTextColor(S.r,S.g,S.b)
+        doc.text(String(i+1).padStart(2,'0'), M, y)
+        doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30)
+        doc.text(s.heading, M+9, y)
+        doc.setTextColor(180,180,180); doc.text(String(i+3), W-M, y, {align:'right'})
+        y+=10
       })
 
-      // Footer on cover
-      doc.setFillColor(10, 10, 10)
-      doc.rect(0, pageH - 20, pageW, 20, 'F')
-      doc.setTextColor(245, 200, 66)
-      doc.setFontSize(8)
-      doc.setFont('helvetica', 'normal')
-      doc.text('AU STUDIO · INTERNAL CREATIVE HUB', margin, pageH - 8)
-      doc.setTextColor(100, 100, 100)
-      doc.text('CONFIDENTIAL', pageW - margin, pageH - 8, { align: 'right' })
+      // Footer: accent bottom line
+      doc.setFillColor(A.r,A.g,A.b); doc.rect(0,H-10,W,1,'F')
+      doc.setFillColor(P.r,P.g,P.b); doc.rect(0,H-9,W,9,'F')
+      doc.setTextColor(130,130,130); doc.setFontSize(7)
+      doc.text(docSpec.metadata.date, M, H-4)
+      doc.text('2', W-M, H-4, {align:'right'})
 
-      // ── Content pages ──
-      docSpec.sections.forEach((section, idx) => {
+      // ── CONTENT PAGES ──
+      docSpec.sections.forEach((section,idx)=>{
         doc.addPage()
-        y = margin
+        // Header
+        doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,14,'F')
+        doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,6,14,'F')
+        doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7.5); doc.setFont('helvetica','bold')
+        doc.text(brand.name.toUpperCase(), 12, 9)
+        doc.setTextColor(130,130,130)
+        doc.text(docSpec.title.toUpperCase().substring(0,52), W-M, 9, {align:'right'})
 
-        // Page header
-        doc.setFillColor(10, 10, 10)
-        doc.rect(0, 0, pageW, 14, 'F')
-        doc.setTextColor(245, 200, 66)
-        doc.setFontSize(7)
-        doc.setFont('helvetica', 'bold')
-        doc.text(docSpec.title.toUpperCase(), margin, 9)
-        doc.setTextColor(150, 150, 150)
-        doc.text(docSpec.metadata.company.toUpperCase(), pageW - margin, 9, { align: 'right' })
+        y=28
+        // Section number: accent color badge
+        doc.setFillColor(A.r,A.g,A.b); doc.rect(M,y-5,9,9,'F')
+        // Number text: primary on accent
+        doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(8); doc.setFont('helvetica','bold')
+        doc.text(String(idx+1).padStart(2,'0'), M+1, y)
 
-        y = 28
+        // Section title: primary color
+        doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(14); doc.setFont('helvetica','bold')
+        doc.text(section.heading.toUpperCase(), M+13, y)
 
-        // Section number + title
-        doc.setFillColor(245, 200, 66)
-        doc.rect(margin, y - 6, 8, 8, 'F')
-        doc.setTextColor(10, 10, 10)
-        doc.setFontSize(8)
-        doc.setFont('helvetica', 'bold')
-        doc.text(`${String(idx + 1).padStart(2, '0')}`, margin + 1.5, y)
+        // Underline: secondary
+        doc.setFillColor(S.r,S.g,S.b); doc.rect(M, y+3, CW, 0.6, 'F')
+        y+=13
 
-        doc.setFontSize(16)
-        doc.setFont('helvetica', 'bold')
-        doc.setTextColor(10, 10, 10)
-        doc.text(section.heading.toUpperCase(), margin + 12, y)
-
-        // Accent line
-        doc.setFillColor(245, 200, 66)
-        doc.rect(margin, y + 3, contentW, 0.8, 'F')
-
-        y += 14
-
-        // Body content
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor(50, 50, 50)
-        const lines = doc.splitTextToSize(section.content, contentW)
-        lines.forEach((line: string) => {
-          if (y > pageH - 25) {
+        // Body: dark text
+        doc.setFontSize(9.5); doc.setFont('helvetica','normal'); doc.setTextColor(42,42,42)
+        const lines = doc.splitTextToSize(section.content, CW)
+        for (const line of lines) {
+          if (y > H-16) {
+            // Footer before page break
+            doc.setFillColor(A.r,A.g,A.b); doc.rect(0,H-10,W,1,'F')
+            doc.setFillColor(P.r,P.g,P.b); doc.rect(0,H-9,W,9,'F')
+            doc.setTextColor(130,130,130); doc.setFontSize(7)
+            doc.text(docSpec.metadata.date, M, H-4)
+            doc.text(String(idx+3), W-M, H-4, {align:'right'})
             doc.addPage()
-            y = 25
-            // mini header
-            doc.setFillColor(10, 10, 10)
-            doc.rect(0, 0, pageW, 14, 'F')
-            doc.setTextColor(245, 200, 66)
-            doc.setFontSize(7)
-            doc.setFont('helvetica', 'bold')
-            doc.text(docSpec.title.toUpperCase(), margin, 9)
-            y = 25
+            doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,14,'F')
+            doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,6,14,'F')
+            doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7.5); doc.setFont('helvetica','bold')
+            doc.text(brand.name.toUpperCase(), 12, 9)
+            doc.setTextColor(130,130,130)
+            doc.text(docSpec.title.toUpperCase().substring(0,52), W-M, 9, {align:'right'})
+            y=24
+            doc.setFontSize(9.5); doc.setFont('helvetica','normal'); doc.setTextColor(42,42,42)
           }
-          doc.setFontSize(10)
-          doc.setFont('helvetica', 'normal')
-          doc.setTextColor(50, 50, 50)
-          doc.text(line, margin, y)
-          y += 6
-        })
+          doc.text(line, M, y); y+=5.5
+        }
 
         // Page footer
-        doc.setFillColor(247, 247, 245)
-        doc.rect(0, pageH - 14, pageW, 14, 'F')
-        doc.setTextColor(150, 150, 150)
-        doc.setFontSize(8)
-        doc.text(docSpec.metadata.date, margin, pageH - 6)
-        doc.setTextColor(10, 10, 10)
-        doc.setFont('helvetica', 'bold')
-        doc.text(`${idx + 2}`, pageW - margin, pageH - 6, { align: 'right' })
+        doc.setFillColor(A.r,A.g,A.b); doc.rect(0,H-10,W,1,'F')
+        doc.setFillColor(P.r,P.g,P.b); doc.rect(0,H-9,W,9,'F')
+        doc.setTextColor(130,130,130); doc.setFontSize(7)
+        doc.text(docSpec.metadata.date, M, H-4)
+        doc.text(String(idx+3), W-M, H-4, {align:'right'})
       })
 
-      doc.save(`${docSpec.title.replace(/\s+/g, '_')}_AU_Studio.pdf`)
-
-      setMessages(prev => [...prev, {
-        role: 'au',
-        content: `✓ **${docSpec.title}** has been downloaded as a PDF. Would you like me to revise any section, adjust the tone, or create a variation of this document?`,
-        type: 'text'
-      }])
-    } catch (err) {
+      doc.save(`${docSpec.title.replace(/\s+/g,'_')}_${brand.name}_AU.pdf`)
+      setMessages(prev => [...prev, {role:'au', content:`✓ **${docSpec.title}** downloaded. Would you like to revise any section or create a variation?`, type:'text'}])
+    } catch(err) {
       console.error(err)
-      setMessages(prev => [...prev, {
-        role: 'au',
-        content: 'PDF generation encountered an error. Please try again.',
-        type: 'text'
-      }])
-    } finally {
-      setGenerating(false)
-    }
+      setMessages(prev => [...prev, {role:'au', content:'PDF generation error. Please try again.', type:'text'}])
+    } finally { setGenerating(false) }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
-
-  function formatMessage(content: string) {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br/>')
-      .replace(/^• /gm, '&nbsp;&nbsp;• ')
+  function fmt(t: string) {
+    return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>').replace(/^• /gm,'&nbsp;&nbsp;• ')
   }
 
   return (
-    <div className="flex flex-col flex-1 h-screen">
+    <div className="flex flex-col flex-1" style={{height:'100vh'}}>
       {/* Topbar */}
       <div className="bg-white border-b border-gray-200 flex items-center justify-between px-7 py-4 flex-shrink-0">
         <div>
           <div className="text-xs text-gray-400 tracking-widest uppercase">Creation</div>
           <div className="font-bebas text-2xl text-aurum-black tracking-wide">PDF Studio</div>
         </div>
-        <div className="flex gap-3 items-center">
-          <span className="text-xs text-gray-400">Institutional document generator</span>
+        <div className="flex items-center gap-3">
+          {/* Brand selector */}
+          <select
+            onChange={e => { const b = brands.find(x=>x.id===e.target.value); if(b) selectBrand(b) }}
+            className="border border-gray-200 px-3 py-2 text-xs text-aurum-black outline-none focus:border-aurum-black bg-white"
+            value={brand?.id || ''}
+          >
+            <option value="">Select brand profile...</option>
+            {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+          {brand && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3" style={{background:brand.primary_color}} title="Primary"/>
+              <div className="w-3 h-3" style={{background:brand.secondary_color}} title="Secondary"/>
+              <div className="w-3 h-3 border border-gray-200" style={{background:brand.accent_color}} title="Accent"/>
+            </div>
+          )}
           {docSpec && (
-            <button
-              onClick={generatePDF}
-              disabled={generating}
-              className="bg-aurum-black text-white px-5 py-2 text-xs font-medium tracking-wide hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50"
-            >
+            <button onClick={generatePDF} disabled={generating}
+              className="bg-aurum-black text-white px-5 py-2 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50">
               {generating ? 'Generating...' : '↓ Download PDF'}
             </button>
+          )}
+          {!brands.length && (
+            <a href="/dashboard/brands" className="text-xs text-aurum-yellow underline">Create brand profile first</a>
           )}
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Chat area */}
+        {/* Chat */}
         <div className="flex flex-col flex-1 min-w-0">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                {/* Avatar */}
-                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center text-xs font-bold
-                  ${msg.role === 'au' ? 'bg-aurum-black text-aurum-yellow' : 'bg-aurum-yellow text-aurum-black'}`}>
-                  {msg.role === 'au' ? 'AU' : 'ME'}
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 bg-aurum-surface">
+            {messages.map((msg,i) => (
+              <div key={i} className={`flex gap-3 ${msg.role==='user'?'flex-row-reverse':''}`}>
+                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center text-xs font-bold ${msg.role==='au'?'bg-aurum-black text-aurum-yellow':'bg-aurum-yellow text-aurum-black'}`}>
+                  {msg.role==='au'?'AU':'ME'}
                 </div>
-
-                {/* Bubble */}
-                {msg.type === 'thinking' ? (
-                  <div className="bg-white border border-gray-200 px-4 py-3 max-w-lg">
+                {msg.type==='thinking' ? (
+                  <div className="bg-white border border-gray-200 px-4 py-3">
                     <div className="flex gap-1 items-center">
-                      <div className="w-1.5 h-1.5 bg-aurum-yellow rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1.5 h-1.5 bg-aurum-yellow rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-1.5 h-1.5 bg-aurum-yellow rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      <span className="text-xs text-gray-400 ml-2">AU is thinking...</span>
+                      {[0,150,300].map(d=>(
+                        <div key={d} className="w-1.5 h-1.5 bg-aurum-yellow rounded-full animate-bounce" style={{animationDelay:`${d}ms`}}/>
+                      ))}
+                      <span className="text-xs text-gray-400 ml-2">AU is drafting...</span>
                     </div>
                   </div>
-                ) : msg.type === 'document-ready' ? (
-                  <div className="bg-aurum-black text-white px-4 py-3 max-w-lg flex items-center gap-3">
+                ) : msg.type==='document-ready' ? (
+                  <div className="bg-aurum-black text-white px-4 py-3 flex items-center gap-3">
                     <div className="w-8 h-10 bg-aurum-yellow flex items-center justify-center flex-shrink-0">
                       <span className="text-aurum-black font-bold text-xs">PDF</span>
                     </div>
                     <div>
                       <div className="text-xs text-gray-400 uppercase tracking-wide">Document ready</div>
                       <div className="text-sm font-medium text-aurum-yellow">{docSpec?.title}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">{docSpec?.sections.length} sections · {docSpec?.metadata.date}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{docSpec?.sections.length} sections · {docSpec?.metadata.date}</div>
                     </div>
-                    <button
-                      onClick={generatePDF}
-                      disabled={generating}
-                      className="ml-auto bg-aurum-yellow text-aurum-black px-3 py-1.5 text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                      {generating ? '...' : '↓ PDF'}
+                    <button onClick={generatePDF} disabled={generating}
+                      className="ml-auto bg-aurum-yellow text-aurum-black px-3 py-1.5 text-xs font-bold hover:opacity-90 disabled:opacity-50">
+                      {generating?'...':'↓ PDF'}
                     </button>
                   </div>
                 ) : (
-                  <div className={`px-4 py-3 max-w-2xl text-sm leading-relaxed
-                    ${msg.role === 'au'
-                      ? 'bg-white border border-gray-200 text-gray-700'
-                      : 'bg-aurum-black text-white'
-                    }`}
-                    dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
-                  />
+                  <div className={`px-4 py-3 max-w-2xl text-sm leading-relaxed ${msg.role==='au'?'bg-white border border-gray-200 text-gray-700':'bg-aurum-black text-white'}`}
+                    dangerouslySetInnerHTML={{__html:fmt(msg.content)}}/>
                 )}
               </div>
             ))}
-            <div ref={bottomRef} />
+            <div ref={bottomRef}/>
           </div>
 
-          {/* Input area */}
+          {/* Input */}
           <div className="border-t border-gray-200 bg-white px-6 py-4 flex-shrink-0">
-            {uploadedFile && (
+            {uploadedName && (
               <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 bg-gray-50 border border-gray-200 px-3 py-2">
                 <span className="bg-aurum-yellow text-aurum-black px-1.5 py-0.5 font-bold text-xs">REF</span>
-                <span>{uploadedFile.name}</span>
-                <button onClick={() => setUploadedFile(null)} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+                <span>{uploadedName}</span>
+                <button onClick={()=>{setUploadedName('');setUploadedText('')}} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
               </div>
             )}
             <div className="flex gap-3 items-end">
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="flex-shrink-0 border border-gray-200 p-2.5 hover:border-aurum-black transition-colors"
-                title="Upload reference document"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2v8M5 5l3-3 3 3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="#666" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <button onClick={()=>fileRef.current?.click()} className="border border-gray-200 p-2.5 hover:border-aurum-black transition-colors flex-shrink-0" title="Upload reference">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 5l3-3 3 3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="#666" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
-              <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={handleFileUpload} />
-
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Describe the document you need... (Press Enter to send, Shift+Enter for new line)"
-                rows={2}
-                className="flex-1 border border-gray-200 px-4 py-3 text-sm text-aurum-black resize-none outline-none focus:border-aurum-black transition-colors placeholder-gray-300"
-              />
-
-              <button
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                className="flex-shrink-0 bg-aurum-black text-white px-5 py-3 text-xs font-medium tracking-wide hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
+              <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx" className="hidden" onChange={handleFile}/>
+              <textarea value={input} onChange={e=>setInput(e.target.value)}
+                onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
+                placeholder="Describe the document · paste rough text to refine · ask AU to improve any section..."
+                rows={2} className="flex-1 border border-gray-200 px-4 py-3 text-sm text-aurum-black resize-none outline-none focus:border-aurum-black placeholder-gray-300"/>
+              <button onClick={send} disabled={loading||!input.trim()}
+                className="bg-aurum-black text-white px-5 py-3 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-40 flex-shrink-0">
                 Send
               </button>
             </div>
-            <div className="text-xs text-gray-300 mt-2">AU creates institutional-grade PDFs · Upload a reference to match existing formats</div>
+            <div className="text-xs text-gray-300 mt-2">AU creates institutional-grade PDFs using your brand profile · Upload reference to match existing formats</div>
           </div>
         </div>
 
-        {/* Document preview panel */}
-        {docSpec && (
-          <div className="w-80 border-l border-gray-200 bg-white flex flex-col overflow-hidden flex-shrink-0">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-400 uppercase tracking-wide">Preview</div>
-                <div className="text-sm font-medium text-aurum-black mt-0.5 truncate">{docSpec.title}</div>
-              </div>
-              <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5">Ready</span>
+        {/* Preview panel */}
+        {docSpec && brand && (
+          <div className="w-72 border-l border-gray-200 bg-white flex flex-col flex-shrink-0">
+            <div className="px-5 py-4 border-b border-gray-200">
+              <div className="text-xs text-gray-400 uppercase tracking-wide">Preview</div>
+              <div className="text-sm font-medium text-aurum-black mt-0.5 truncate">{docSpec.title}</div>
             </div>
-
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              {/* Mini cover */}
-              <div className="bg-aurum-black p-4 mb-4">
-                <div className="text-aurum-yellow text-xs font-bold tracking-widest uppercase mb-1">{docSpec.metadata.company}</div>
-                <div className="text-white text-sm font-bold leading-tight">{docSpec.title}</div>
-                <div className="text-gray-400 text-xs mt-2">{docSpec.metadata.date}</div>
-                {docSpec.metadata.confidential && (
-                  <div className="mt-2 text-xs border border-gray-600 text-gray-400 px-2 py-0.5 inline-block">CONFIDENTIAL</div>
-                )}
-              </div>
-
-              {/* Sections list */}
-              <div className="section-label">Sections ({docSpec.sections.length})</div>
-              {docSpec.sections.map((s, i) => (
-                <div key={i} className="flex gap-3 items-start py-3 border-b border-gray-100 last:border-0">
-                  <div className="w-6 h-6 bg-aurum-yellow flex items-center justify-center flex-shrink-0 text-xs font-bold text-aurum-black">
-                    {String(i + 1).padStart(2, '0')}
+            {/* Mini cover */}
+            <div className="mx-5 mt-4 p-4 mb-4" style={{background:brand.primary_color}}>
+              <div className="text-xs font-bold tracking-widest uppercase mb-1" style={{color:brand.secondary_color}}>{brand.name}</div>
+              <div className="text-white text-sm font-bold leading-tight">{docSpec.title}</div>
+              {docSpec.subtitle && <div className="text-xs mt-1" style={{color:brand.accent_color}}>{docSpec.subtitle}</div>}
+              <div className="text-xs mt-2" style={{color:'rgba(255,255,255,0.5)'}}>{docSpec.metadata.date}</div>
+            </div>
+            <div className="px-5 flex-1 overflow-y-auto">
+              <div className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-medium">Sections ({docSpec.sections.length})</div>
+              {docSpec.sections.map((s,i)=>(
+                <div key={i} className="flex gap-3 items-start py-2.5 border-b border-gray-100 last:border-0">
+                  <div className="w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0" style={{background:brand.secondary_color, color:brand.primary_color}}>
+                    {String(i+1).padStart(2,'0')}
                   </div>
                   <div>
                     <div className="text-xs font-medium text-aurum-black">{s.heading}</div>
-                    <div className="text-xs text-gray-400 mt-0.5 line-clamp-2">{s.content.substring(0, 80)}...</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{s.content.substring(0,70)}...</div>
                   </div>
                 </div>
               ))}
             </div>
-
             <div className="px-5 py-4 border-t border-gray-200">
-              <button
-                onClick={generatePDF}
-                disabled={generating}
-                className="w-full bg-aurum-black text-white py-3 text-xs font-bold tracking-widest hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50"
-              >
-                {generating ? 'GENERATING PDF...' : '↓ GENERATE PDF'}
+              <button onClick={generatePDF} disabled={generating}
+                className="w-full bg-aurum-black text-white py-3 text-xs font-bold tracking-widest hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-50">
+                {generating?'GENERATING...':'↓ GENERATE PDF'}
               </button>
             </div>
           </div>
@@ -527,3 +427,5 @@ Never break character. Always respond as AU.`
     </div>
   )
 }
+
+export default PDFPage

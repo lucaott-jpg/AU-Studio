@@ -1,23 +1,18 @@
-'use client'
-
 import Sidebar from '@/components/layout/Sidebar'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase-browser'
+import { createClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const router = useRouter()
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.push('/login')
-    })
-  }, [])
+  if (!session) {
+    redirect('/login')
+  }
 
   return (
     <div className="flex min-h-screen bg-aurum-surface">
