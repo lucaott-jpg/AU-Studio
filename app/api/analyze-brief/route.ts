@@ -1,25 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
-    const { briefing, type, systemPrompt, history } = await req.json()
+    const contentType = req.headers.get('content-type') || ''
+    let briefing = '', type = '', systemPrompt = '', history: any[] = [], fileBase64 = '', fileType = ''
 
-    if (!briefing) {
-      return NextResponse.json({ error: 'No briefing provided' }, { status: 400 })
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData()
+      briefing = formData.get('briefing') as string || ''
+      type = formData.get('type') as string || ''
+      systemPrompt = formData.get('systemPrompt') as string || ''
+      const historyStr = formData.get('history') as string || '[]'
+      history = JSON.parse(historyStr)
+      const file = formData.get('file') as File | null
+      if (file) {
+        const buffer = await file.arrayBuffer()
+        fileBase64 = Buffer.from(buffer).toString('base64')
+        fileType = file.type
+      }
+    } else {
+      const body = await req.json()
+      briefing = body.briefing || ''
+      type = body.type || ''
+      systemPrompt = body.systemPrompt || ''
+      history = body.history || []
     }
 
-    const defaultSystem = `You are AU, an elite institutional document specialist for AU Studio, an internal corporate creative hub.
-You create professional, polished institutional documents — reports, proposals, executive briefs, and presentations.
-Always respond in a professional, precise tone. Never casual. Speak like a senior partner at a top consultancy.`
+    if (!briefing && !fileBase64) {
+      return NextResponse.json({ error: 'No content provided' }, { status: 400 })
+    }
 
-    const messages = history && history.length > 0
-      ? history
-      : [{ role: 'user', content: `Analyze this ${type || 'document'} briefing:\n\n${briefing}` }]
+    const defaultSystem = `You are AU, an elite institutional document strategist for AU Studio. You operate at BlackRock / McKinsey / Goldman Sachs level. Always respond professionally and precisely.`
+
+    let messages: any[] = history.length > 0 ? history : []
+
+    if (fileBase64) {
+      // Build message with file
+      const userContent: any[] = []
+      if (fileType === 'application/pdf') {
+        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileBase64 } })
+      } else if (fileType.startsWith('image/')) {
+        userContent.push({ type: 'image', source: { type: 'base64', media_type: fileType, data: fileBase64 } })
+      }
+      if (briefing) userContent.push({ type: 'text', text: briefing })
+      messages = [...messages, { role: 'user', content: userContent }]
+    } else if (messages.length === 0) {
+      messages = [{ role: 'user', content: briefing }]
+    }
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',

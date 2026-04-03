@@ -83,7 +83,7 @@ export default function BrandsPage() {
     try {
       const {data:{user}} = await supabase.auth.getUser()
       const payload = { name:form.name, industry:form.industry, tagline:form.tagline, legal_name:form.legal_name, primary_color:form.primary_color, secondary_color:form.secondary_color, accent_color:form.accent_color, font_heading:form.font_heading, font_body:form.font_body, tone:form.tone, logo_url:form.logo_url||null, logo_transparent_url:form.logo_transparent_url||null, created_by:user?.id }
-      if (editBrand) { await supabase.from('brands').update(payload).eq('id',editBrand.id) }
+      if (editBrand) { await supabase.from('brands').update(payload).eq('id',editBrand.id).eq('created_by',user?.id) }
       else { await supabase.from('brands').insert(payload) }
       await fetchBrands(); setShowForm(false); setEditBrand(null); resetForm()
     } finally { setSaving(false) }
@@ -309,4 +309,5 @@ export default function BrandsPage() {
     </div>
   )
 }
+
 

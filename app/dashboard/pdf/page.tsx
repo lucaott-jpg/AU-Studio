@@ -51,6 +51,7 @@ function PDFStudioInner() {
   const [loading, setLoading] = useState(false)
   const [uploadedText, setUploadedText] = useState('')
   const [uploadedName, setUploadedName] = useState('')
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [docSpec, setDocSpec] = useState<DocSpec | null>(null)
   const [generating, setGenerating] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -80,7 +81,8 @@ function PDFStudioInner() {
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return
     setUploadedName(f.name)
-    if (f.type === 'text/plain') { setUploadedText(await f.text()) } else { setUploadedText(`[Reference: ${f.name}]`) }
+    setUploadedFile(f)
+    if (f.type === 'text/plain') { setUploadedText(await f.text()) } else { setUploadedText('') }
     setMessages(prev => [...prev,
       { role:'user', content:`Uploaded: ${f.name}`, type:'text' },
       { role:'au', content:`Reference **${f.name}** received. I will use its content as the basis for your ${docType.label}. Tell me your specific requirements.`, type:'text' }
@@ -138,10 +140,21 @@ Follow the suggested sections for this document type. Each section must have 2-4
       const history = messages.filter(m=>m.type!=='thinking').map(m=>({role:m.role==='au'?'assistant':'user',content:m.content}))
       history.push({role:'user', content: uploadedText ? `${msg}\n\n[REFERENCE CONTENT]:\n${uploadedText}` : msg})
 
-      const res = await fetch('/api/analyze-brief', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({briefing:msg, type:'pdf', systemPrompt:sys, history})
-      })
+      let res
+      if (uploadedFile && uploadedFile.type === 'application/pdf') {
+        const fd = new FormData()
+        fd.append('briefing', msg)
+        fd.append('type', 'pdf')
+        fd.append('systemPrompt', sys)
+        fd.append('history', JSON.stringify(history))
+        fd.append('file', uploadedFile)
+        res = await fetch('/api/analyze-brief', { method:'POST', body: fd })
+      } else {
+        res = await fetch('/api/analyze-brief', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({briefing:msg, type:'pdf', systemPrompt:sys, history})
+        })
+      }
       const data = await res.json()
       setMessages(prev => prev.filter(m=>m.type!=='thinking'))
 
@@ -426,7 +439,7 @@ Follow the suggested sections for this document type. Each section must have 2-4
               <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 bg-gray-50 border border-gray-200 px-3 py-2">
                 <span className="bg-aurum-yellow text-aurum-black px-1.5 py-0.5 font-bold text-xs">REF</span>
                 <span>{uploadedName}</span>
-                <button onClick={()=>{setUploadedName('');setUploadedText('')}} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+                <button onClick={()=>{setUploadedName('');setUploadedText('');setUploadedFile(null)}} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
               </div>
             )}
             <div className="flex gap-3 items-end">
