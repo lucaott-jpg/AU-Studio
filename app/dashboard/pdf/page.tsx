@@ -428,4 +428,4 @@ Include 5-8 sections. Each section: 2-4 full paragraphs. No bullet points. Write
   )
 }
 
-export default PDFPage
+
