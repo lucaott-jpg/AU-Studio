@@ -46,7 +46,7 @@ function PDFStudioInner() {
   const [messages, setMessages] = useState<Message[]>([{
     role: 'au', type: 'text',
     content: isPlaceMode
-      ? 'Select your brand profile above, then upload your file. I will apply your brand template â€” colors, logo, and layout â€” without changing any of your content.'
+      ? 'Select your brand profile above, then upload your file. I will apply your brand template — colors, logo, and layout — without changing any of your content.'
       : 'Select your brand profile above to begin creating your ' + docType.label + '.'
   }])
   const [input, setInput] = useState('')
@@ -74,7 +74,7 @@ function PDFStudioInner() {
     if (isPlaceMode) {
       setMessages([{
         role: 'au', type: 'text',
-        content: 'Brand loaded: **' + b.name + '**\n\nUpload your file now. I will apply your brand identity â€” ' + b.primary_color + ' / ' + b.secondary_color + ' / ' + b.accent_color + ' â€” to the document without changing any content.'
+        content: 'Brand loaded: **' + b.name + '**\n\nUpload your file now. I will apply your brand identity — ' + b.primary_color + ' / ' + b.secondary_color + ' / ' + b.accent_color + ' — to the document without changing any content.'
       }])
     } else {
       setMessages([{
@@ -131,7 +131,7 @@ function PDFStudioInner() {
     } else if (extractedText) {
       setMessages(prev => [...prev, {
         role: 'au', type: 'text',
-        content: 'File **' + f.name + '** received and read. Tell me what you need â€” I will create your ' + docType.label + ' based on this content.'
+        content: 'File **' + f.name + '** received and read. Tell me what you need — I will create your ' + docType.label + ' based on this content.'
       }])
     } else {
       setMessages(prev => [...prev, {
@@ -207,8 +207,8 @@ function PDFStudioInner() {
     try {
       const today = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       const sys = isPlaceMode
-        ? 'You are AU, a document layout specialist for AU Studio. Your ONLY role is cosmetic â€” adjust layout, section order, or styling. NEVER rewrite content. If asked to change content, decline politely.\n\nBRAND: ' + brand.name + ' | COLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color
-        : 'You are AU, an elite institutional document strategist for AU Studio at BlackRock / McKinsey / Goldman level.\n\nBRAND: ' + brand.name + ' (' + (brand.legal_name||brand.name) + ') - ' + brand.industry + '\nCOLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color + '\nFONTS: ' + brand.font_heading + ' / ' + brand.font_body + '\nTONE: ' + brand.tone + '\nDATE: ' + today + '\n\nIMPORTANT: When revising, ALWAYS produce a complete updated DOCUMENT_SPEC with all sections. WHEN READY produce brief commentary then:\n\n<DOCUMENT_SPEC>\n{\n  "title": "Title",\n  "subtitle": "Optional",\n  "sections": [\n    { "heading": "Section", "content": "2-4 full paragraphs, no bullets, institutional quality" }\n  ],\n  "metadata": { "company": "' + brand.name + '", "legal_name": "' + (brand.legal_name||brand.name) + '", "date": "' + today + '", "prepared_by": "AU Studio", "confidential": true }\n}\n</DOCUMENT_SPEC>\n\nInclude 5-8 sections. No filler. Write as a senior partner.'
+        ? 'You are AU, a document layout specialist for AU Studio. Your ONLY role is cosmetic — adjust layout, section order, or styling. NEVER rewrite content. If asked to change content, decline politely.\n\nBRAND: ' + brand.name + ' | COLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color
+        : 'You are AU, an elite institutional document strategist for AU Studio at BlackRock / McKinsey / Goldman level.\n\nBRAND: ' + brand.name + ' (' + (brand.legal_name||brand.name) + ') - ' + brand.industry + '\nCOLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color + '\nFONTS: ' + brand.font_heading + ' / ' + brand.font_body + '\nTONE: ' + brand.tone + '\nDATE: ' + today + '\n\nWHEN READY produce commentary then:\n\n<DOCUMENT_SPEC>\n{\n  "title": "Title",\n  "subtitle": "Optional",\n  "sections": [\n    { "heading": "Section", "content": "2-4 full paragraphs, no bullets, institutional quality" }\n  ],\n  "metadata": { "company": "' + brand.name + '", "legal_name": "' + (brand.legal_name||brand.name) + '", "date": "' + today + '", "prepared_by": "AU Studio", "confidential": true }\n}\n</DOCUMENT_SPEC>\n\nInclude 5-8 sections. No filler. Write as a senior partner.'
 
       const history = messages
         .filter(m => m.type !== 'thinking')
@@ -502,7 +502,7 @@ function PDFStudioInner() {
                 Send
               </button>
             </div>
-            {isPlaceMode && <div className="text-xs text-aurum-yellow mt-2">Place as-is mode â€” upload a file or ask for layout adjustments only</div>}
+            {isPlaceMode && <div className="text-xs text-aurum-yellow mt-2">Place as-is mode — upload a file or ask for layout adjustments only</div>}
           </div>
         </div>
 
