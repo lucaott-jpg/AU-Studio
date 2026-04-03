@@ -10,7 +10,7 @@ interface Document {
   id: string; title: string; doc_type: string; status: string; current_version: number
   created_at: string; updated_at: string
   brands?: { name: string; primary_color: string }
-  deals?: { name: string; company: string }
+  
   profiles?: { full_name: string; email: string }
 }
 
@@ -56,7 +56,7 @@ function DocumentsInner() {
   async function fetchAll() {
     setLoading(true)
     const [{ data: docs }, { data: br }, { data: dl }] = await Promise.all([
-      supabase.from('documents').select('*, brands(name,primary_color), deals(name,company), profiles(full_name,email)').order('updated_at', { ascending: false }),
+      supabase.from('documents').select('*, brands(name,primary_color), profiles(full_name,email)').order('updated_at', { ascending: false }),
       supabase.from('brands').select('id,name,primary_color,secondary_color,logo_url'),
       supabase.from('deals').select('id,name,company,stage,deal_type').order('name')
     ])
@@ -181,7 +181,7 @@ function DocumentsInner() {
                 <th className="text-left px-8 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">Title</th>
                 <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">Type</th>
                 <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">Brand</th>
-                <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">Deal</th>
+                
                 <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">Status</th>
                 <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">Updated</th>
                 <th className="px-4 py-3"></th>
@@ -201,8 +201,8 @@ function DocumentsInner() {
                       {DOC_TYPES.find(t => t.key === doc.doc_type)?.label || doc.doc_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{doc.brands?.name || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{doc.deals?.name || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{doc.brands?.name || 'â€”'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{doc.deals?.name || 'â€”'}</td>
                   <td className="px-4 py-3">
                     <select value={doc.status} onChange={e => updateStatus(doc.id, e.target.value)}
                       className={`text-xs px-2 py-1 border outline-none bg-transparent cursor-pointer ${STATUS_STYLES[doc.status]}`}>
@@ -239,7 +239,7 @@ function DocumentsInner() {
                   <span className="text-xs text-gray-500 ml-1">Step {step} of 3</span>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">âœ•</button>
             </div>
 
             <div className="p-6">
@@ -284,7 +284,7 @@ function DocumentsInner() {
                             <div className="w-4 h-8" style={{ background: brand.secondary_color }}/>
                           </div>
                           <div className="font-medium text-sm text-aurum-black">{brand.name}</div>
-                          {selected.brand === brand.id && <div className="ml-auto text-aurum-yellow">✓</div>}
+                          {selected.brand === brand.id && <div className="ml-auto text-aurum-yellow">âœ“</div>}
                         </button>
                       ))}
                     </div>
@@ -297,13 +297,13 @@ function DocumentsInner() {
                 <div>
                   <div className="text-sm font-medium text-aurum-black mb-1">How would you like to start?</div>
                   <div className="text-xs text-gray-400 mb-4">
-                    Creating: <strong>{selectedDocType?.label}</strong> · Brand: <strong>{selectedBrand?.name}</strong>
+                    Creating: <strong>{selectedDocType?.label}</strong> Â· Brand: <strong>{selectedBrand?.name}</strong>
                   </div>
                   <div className="space-y-2">
                     {[
                       { key: 'ai', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
                       { key: 'upload', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
-                      { key: 'place', label: 'Place as-is', desc: 'Upload a file — AU applies your brand template without changing any content' },
+                      { key: 'place', label: 'Place as-is', desc: 'Upload a file â€” AU applies your brand template without changing any content' },
                     ].map(m => (
                       <button key={m.key} onClick={() => setSelected(s => ({ ...s, mode: m.key }))}
                         className={`w-full text-left p-4 border transition-all ${selected.mode === m.key ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -312,7 +312,7 @@ function DocumentsInner() {
                             <div className="text-xs font-semibold text-aurum-black">{m.label}</div>
                             <div className="text-xs text-gray-400 mt-0.5">{m.desc}</div>
                           </div>
-                          {selected.mode === m.key && <div className="ml-auto text-aurum-yellow">✓</div>}
+                          {selected.mode === m.key && <div className="ml-auto text-aurum-yellow">âœ“</div>}
                         </div>
                       </button>
                     ))}
@@ -336,7 +336,7 @@ function DocumentsInner() {
                 ) : (
                   <button onClick={handleCreate} disabled={!canNext()}
                     className="bg-aurum-yellow text-aurum-black px-8 py-3 text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-40">
-                    Create document →
+                    Create document â†’
                   </button>
                 )}
               </div>
