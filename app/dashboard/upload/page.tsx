@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
@@ -47,6 +47,7 @@ export default function UploadPage() {
   const [logoDataUrl, setLogoDataUrl] = useState<string>('')
   const fileRef = useRef<HTMLInputElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
+  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   const supabase = createClient()
 
   useEffect(() => {
@@ -167,7 +168,7 @@ export default function UploadPage() {
       const S = hexToRgb(brand.secondary_color)
       const A = hexToRgb(brand.accent_color)
       const dark = isDark(brand.primary_color)
-      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+
 
       function addLogo(x: number, y: number, maxW: number, maxH: number) {
         if (!logoDataUrl) return
