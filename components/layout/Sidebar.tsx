@@ -1,14 +1,14 @@
-﻿'use client'
+'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 const navItems = [
-  { label: 'Dashboard',  href: '/dashboard',           icon: 'â–ª' },
-  { label: 'Brands',     href: '/dashboard/brands',     icon: 'â—‰' },
-  { label: 'Documents',  href: '/dashboard/documents',  icon: 'â–¤' },
-  { label: 'AU Studio',  href: '/dashboard/au-studio',  icon: 'âœ¦' },
-  { label: 'Settings',   href: '/dashboard/settings',   icon: 'â—Ž' },
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Brands', href: '/dashboard/brands' },
+  { label: 'Documents', href: '/dashboard/documents' },
+  { label: 'AU Studio', href: '/dashboard/au-studio' },
+  { label: 'Settings', href: '/dashboard/settings' },
 ]
 
 export default function Sidebar() {
@@ -30,8 +30,8 @@ export default function Sidebar() {
       </div>
       <div className="px-4 py-4 border-b border-white/5">
         <button onClick={() => router.push('/dashboard/documents?new=1')}
-          className="w-full bg-aurum-yellow text-aurum-black py-2.5 text-xs font-bold tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-          <span>+</span> New Document
+          className="w-full bg-aurum-yellow text-aurum-black py-2.5 text-xs font-bold tracking-wider hover:opacity-90 transition-opacity">
+          + New Document
         </button>
       </div>
       <nav className="flex-1 py-3">
@@ -39,10 +39,9 @@ export default function Sidebar() {
           const active = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href)
           return (
             <button key={item.href} onClick={() => router.push(item.href)}
-              className={`w-full flex items-center gap-3 px-6 py-2.5 text-xs transition-all text-left
-                ${active ? 'text-aurum-yellow bg-white/5 border-r-2 border-aurum-yellow' : 'text-gray-500 hover:text-gray-300 hover:bg-white/3'}`}>
-              <span className="text-base leading-none">{item.icon}</span>
-              <span className="font-medium">{item.label}</span>
+              className={`w-full flex items-center px-6 py-2.5 text-xs transition-all text-left font-medium
+                ${active ? 'text-aurum-yellow bg-white/5 border-r-2 border-aurum-yellow' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
+              {item.label}
             </button>
           )
         })}
@@ -53,4 +52,3 @@ export default function Sidebar() {
     </aside>
   )
 }
-
