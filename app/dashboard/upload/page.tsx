@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
@@ -22,7 +22,7 @@ type TemplateKey = 'minimal' | 'institutional' | 'split' | 'executive'
 const TEMPLATES: { key: TemplateKey; label: string; desc: string }[] = [
   { key: 'minimal',       label: 'Minimal',       desc: 'White pages, clean typography, color accents only' },
   { key: 'institutional', label: 'Institutional',  desc: 'Dark cover, white content pages, gold accents' },
-  { key: 'split',         label: 'Split',          desc: 'Color left column, content right — high impact' },
+  { key: 'split',         label: 'Split',          desc: 'Color left column, content right â€” high impact' },
   { key: 'executive',     label: 'Executive',      desc: 'Full bleed cover, conservative, ultra-tight' },
 ]
 
@@ -217,7 +217,7 @@ export default function UploadPage() {
         }
       }
 
-      // ── COVER PAGE ──
+      // â”€â”€ COVER PAGE â”€â”€
       if (template === 'minimal') {
         // White cover with strong typography
         doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F')
@@ -302,8 +302,8 @@ export default function UploadPage() {
         doc.setFillColor(S.r,S.g,S.b); doc.rect(62, ty+2, W-55-M-5, 0.8, 'F')
 
         doc.setTextColor(100,100,100); doc.setFontSize(8); doc.setFont('helvetica','normal')
-        doc.text('PREPARED BY · AU Studio', 62, H-30)
-        doc.text('DATE · '+today, 62, H-22)
+        doc.text('PREPARED BY Â· AU Studio', 62, H-30)
+        doc.text('DATE Â· '+today, 62, H-22)
         doc.text('CONFIDENTIAL', 62, H-14)
 
       } else if (template === 'executive') {
@@ -338,7 +338,7 @@ export default function UploadPage() {
         doc.text(brand.legal_name||brand.name, M, H*0.55+35)
       }
 
-      // ── CONTENTS PAGE ──
+      // â”€â”€ CONTENTS PAGE â”€â”€
       doc.addPage()
       pageHeader(2)
 
@@ -362,7 +362,7 @@ export default function UploadPage() {
       })
       pageFooter(2)
 
-      // ── CONTENT PAGES ──
+      // â”€â”€ CONTENT PAGES â”€â”€
       content.sections.forEach((section, idx) => {
         doc.addPage()
         pageHeader(idx+3)
@@ -493,9 +493,9 @@ export default function UploadPage() {
                 </div>
               ) : (
                 <div>
-                  <div className="text-2xl mb-2 text-gray-300">↑</div>
+                  <div className="text-2xl mb-2 text-gray-300">â†‘</div>
                   <div className="text-xs font-medium text-gray-500">Drop file here or click</div>
-                  <div className="text-xs text-gray-300 mt-1">PDF · Word · Excel · Text</div>
+                  <div className="text-xs text-gray-300 mt-1">PDF Â· Word Â· Excel Â· Text</div>
                 </div>
               )}
             </div>
@@ -532,7 +532,7 @@ export default function UploadPage() {
             {content && brand && (
               <button onClick={cycleTemplate}
                 className="w-full mt-2 border border-gray-200 py-2.5 text-xs text-gray-500 hover:border-aurum-black hover:text-aurum-black transition-colors">
-                ↻ Try next template
+                â†» Try next template
               </button>
             )}
           </div>
@@ -544,13 +544,13 @@ export default function UploadPage() {
             <div className="text-center">
               <div className="font-bebas text-6xl text-gray-100 tracking-widest mb-4">AU</div>
               <div className="text-sm text-gray-400 mb-2">Select a brand and upload a document</div>
-              <div className="text-xs text-gray-300">PDF · Word · Excel · Text supported</div>
+              <div className="text-xs text-gray-300">PDF Â· Word Â· Excel Â· Text supported</div>
             </div>
           ) : (
             <div className="w-full max-w-lg">
               {/* Mini cover preview */}
               <div className="text-xs text-gray-400 uppercase tracking-widest mb-3 text-center">
-                Preview — {currentTemplate.label}
+                Preview â€” {currentTemplate.label}
               </div>
 
               {/* Cover mockup */}
@@ -568,7 +568,7 @@ export default function UploadPage() {
                     <div className="absolute top-6 left-5 text-xs font-bold" style={{color:brand.primary_color, fontSize:'8px'}}>{brand.name.toUpperCase()}</div>
                     <div className="absolute top-12 left-5 right-5 font-bold leading-tight text-gray-900" style={{fontSize:'16px'}}>{content.title.toUpperCase()}</div>
                     <div className="absolute bottom-8 left-5" style={{background:brand.primary_color, height:'0.5px', width:'80%'}}/>
-                    <div className="absolute bottom-4 left-5 text-gray-400" style={{fontSize:'7px'}}>AU Studio · {today}</div>
+                    <div className="absolute bottom-4 left-5 text-gray-400" style={{fontSize:'7px'}}>AU Studio Â· {today}</div>
                   </>
                 )}
                 {template === 'institutional' && (
@@ -577,7 +577,7 @@ export default function UploadPage() {
                     <div className="absolute top-6 left-5 text-xs font-bold" style={{color:brand.secondary_color, fontSize:'8px'}}>{brand.name.toUpperCase()}</div>
                     <div className="absolute top-12 left-5 right-5 font-bold leading-tight text-white" style={{fontSize:'16px'}}>{content.title.toUpperCase()}</div>
                     <div className="absolute bottom-0 left-0 right-0 h-14 bg-black/50"/>
-                    <div className="absolute bottom-4 left-5 text-white" style={{fontSize:'7px', opacity:0.7}}>AU Studio · Confidential · {today}</div>
+                    <div className="absolute bottom-4 left-5 text-white" style={{fontSize:'7px', opacity:0.7}}>AU Studio Â· Confidential Â· {today}</div>
                   </>
                 )}
                 {template === 'split' && (
@@ -594,7 +594,7 @@ export default function UploadPage() {
                     <div className="absolute" style={{top:'55%', left:0, right:0, height:'2px', background:brand.secondary_color}}/>
                     <div className="absolute top-6 left-5 text-xs" style={{color:brand.secondary_color, fontSize:'7px'}}>{brand.name.toUpperCase()}</div>
                     <div className="absolute font-bold leading-tight text-white" style={{top:'35%', left:'5%', fontSize:'14px', width:'85%'}}>{content.title.toUpperCase()}</div>
-                    <div className="absolute text-gray-500" style={{top:'60%', left:'5%', fontSize:'7px'}}>AU Studio · {today}</div>
+                    <div className="absolute text-gray-500" style={{top:'60%', left:'5%', fontSize:'7px'}}>AU Studio Â· {today}</div>
                   </>
                 )}
               </div>
@@ -621,3 +621,4 @@ export default function UploadPage() {
     </div>
   )
 }
+
