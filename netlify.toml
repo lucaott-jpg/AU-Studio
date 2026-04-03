@@ -1,9 +1,16 @@
-[build]
+﻿[build]
   command = "npm run build"
   publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  ANTHROPIC_API_KEY = ""
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[build.environment]
-  NODE_VERSION = "18"
+[functions]
+  node_bundler = "nft"
+
+[functions."*"]
+  timeout = 60
