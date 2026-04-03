@@ -207,8 +207,8 @@ function PDFStudioInner() {
     try {
       const today = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       const sys = isPlaceMode
-        ? 'You are AU, a document layout specialist for AU Studio. Your ONLY role is cosmetic — adjust layout, section order, or styling. NEVER rewrite content. If asked to change content, decline politely.\n\nBRAND: ' + brand.name + ' | COLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color
-        : 'You are AU, an elite institutional document strategist for AU Studio at BlackRock / McKinsey / Goldman level.\n\nBRAND: ' + brand.name + ' (' + (brand.legal_name||brand.name) + ') - ' + brand.industry + '\nCOLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color + '\nFONTS: ' + brand.font_heading + ' / ' + brand.font_body + '\nTONE: ' + brand.tone + '\nDATE: ' + today + '\n\nWHEN READY produce commentary then:\n\n<DOCUMENT_SPEC>\n{\n  "title": "Title",\n  "subtitle": "Optional",\n  "sections": [\n    { "heading": "Section", "content": "2-4 full paragraphs, no bullets, institutional quality" }\n  ],\n  "metadata": { "company": "' + brand.name + '", "legal_name": "' + (brand.legal_name||brand.name) + '", "date": "' + today + '", "prepared_by": "AU Studio", "confidential": true }\n}\n</DOCUMENT_SPEC>\n\nInclude 5-8 sections. No filler. Write as a senior partner.'
+        ? 'You are AU, a document layout specialist for AU Studio. Your ONLY role is cosmetic — adjust layout, section order, or styling. NEVER rewrite content. If asked to change content, decline politely.\n\nBRAND: ' + brand.name + ' | COLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color + '\n\nCRITICAL: Every response MUST include an updated DOCUMENT_SPEC even if only making cosmetic changes. Always reproduce the full document spec with your adjustments applied.'
+        : 'You are AU, an elite institutional document strategist for AU Studio at BlackRock / McKinsey / Goldman level.\n\nBRAND: ' + brand.name + ' (' + (brand.legal_name||brand.name) + ') - ' + brand.industry + '\nCOLORS: ' + brand.primary_color + ' / ' + brand.secondary_color + ' / ' + brand.accent_color + '\nFONTS: ' + brand.font_heading + ' / ' + brand.font_body + '\nTONE: ' + brand.tone + '\nDATE: ' + today + '\n\nIMPORTANT: When revising an existing document, ALWAYS produce a complete updated DOCUMENT_SPEC with all sections included — not just the changed ones.\n\nWHEN READY produce brief commentary then:\n\n<DOCUMENT_SPEC>\n{\n  "title": "Title",\n  "subtitle": "Optional",\n  "sections": [\n    { "heading": "Section", "content": "2-4 full paragraphs, no bullets, institutional quality" }\n  ],\n  "metadata": { "company": "' + brand.name + '", "legal_name": "' + (brand.legal_name||brand.name) + '", "date": "' + today + '", "prepared_by": "AU Studio", "confidential": true }\n}\n</DOCUMENT_SPEC>\n\nInclude 5-8 sections. No filler. Write as a senior partner.'
 
       const history = messages
         .filter(m => m.type !== 'thinking')
@@ -267,7 +267,7 @@ function PDFStudioInner() {
       doc.setFillColor(S.r, S.g, S.b); doc.rect(0, 0, 6, H, 'F')
       doc.setFillColor(A.r, A.g, A.b); doc.rect(W - 60, 0, 60, 8, 'F')
 
-      // Logo
+      // Logo - with white backing for visibility on dark backgrounds
       const logoUrl = brand.logo_transparent_url || brand.logo_url
       if (logoUrl) {
         try {
@@ -276,9 +276,25 @@ function PDFStudioInner() {
           if (img.naturalWidth > 0) {
             const cv = document.createElement('canvas')
             cv.width = img.naturalWidth; cv.height = img.naturalHeight
-            cv.getContext('2d')!.drawImage(img, 0, 0)
+            const ctx = cv.getContext('2d')!
+            // Check if primary color is dark — if so add white backing
+            const isDark = (P.r * 0.299 + P.g * 0.587 + P.b * 0.114) < 128
+            if (isDark && !brand.logo_transparent_url) {
+              ctx.fillStyle = 'white'
+              ctx.fillRect(0, 0, cv.width, cv.height)
+            }
+            ctx.drawImage(img, 0, 0)
             const ratio = Math.min(48 / img.naturalWidth, 18 / img.naturalHeight)
-            doc.addImage(cv.toDataURL('image/png'), 'PNG', W - M - img.naturalWidth * ratio, 18, img.naturalWidth * ratio, img.naturalHeight * ratio)
+            const lw = img.naturalWidth * ratio
+            const lh = img.naturalHeight * ratio
+            const lx = W - M - lw
+            const ly = 15
+            if (isDark && brand.logo_transparent_url) {
+              // Add subtle white backing rectangle behind transparent logo
+              doc.setFillColor(255, 255, 255)
+              doc.roundedRect(lx - 3, ly - 2, lw + 6, lh + 4, 1, 1, 'F')
+            }
+            doc.addImage(cv.toDataURL('image/png'), 'PNG', lx, ly, lw, lh)
           }
         } catch {}
       }
@@ -356,7 +372,13 @@ function PDFStudioInner() {
         doc.setFillColor(S.r, S.g, S.b); doc.rect(M, y + 3, CW, 0.6, 'F')
         y += 13
 
-        doc.setFontSize(9.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(42, 42, 42)
+        // Detect if content has financial data (numbers with decimals)
+        const isFinancial = /\d{1,3}(,\d{3})*\.\d{2}/.test(section.content)
+        if (isFinancial) {
+          doc.setFontSize(9); doc.setFont('courier', 'normal'); doc.setTextColor(42, 42, 42)
+        } else {
+          doc.setFontSize(9.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(42, 42, 42)
+        }
         const lines = doc.splitTextToSize(section.content, CW)
         for (const line of lines) {
           if (y > H - 16) {
@@ -411,7 +433,7 @@ function PDFStudioInner() {
   }
 
   return (
-    <div className="flex flex-col flex-1" style={{ height: '100vh' }}>
+    <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="bg-white border-b border-gray-200 flex items-center justify-between px-7 py-4 flex-shrink-0">
         <div>
           <div className="text-xs text-gray-400 tracking-widest uppercase">Creation</div>
