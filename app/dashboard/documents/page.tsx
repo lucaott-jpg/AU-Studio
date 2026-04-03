@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -254,7 +254,7 @@ function DocumentsInner() {
                       <button key={type.key} onClick={() => handleTypeSelect(type.key)}
                         className={`text-left p-4 border transition-all ${selected.type === type.key ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
                         <div className="flex items-center gap-3">
-                          <span className="text-lg text-aurum-yellow">{type.icon}</span>
+                          
                           <div>
                             <div className="text-xs font-semibold text-aurum-black">{type.label}</div>
                             <div className="text-xs text-gray-400 mt-0.5 leading-tight">{type.desc}</div>
@@ -303,14 +303,14 @@ function DocumentsInner() {
                   </div>
                   <div className="space-y-2">
                     {[
-                      { key: 'ai', icon: 'âœ¦', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
-                      { key: 'blank', icon: 'â–¤', label: 'Start blank', desc: 'Open the editor with an empty document and write from scratch' },
-                      { key: 'upload', icon: 'â†‘', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
+                      { key: 'ai', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
+                      { key: 'blank', label: 'Start blank', desc: 'Open the editor with an empty document and write from scratch' },
+                      { key: 'upload', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
                     ].map(m => (
                       <button key={m.key} onClick={() => setSelected(s => ({ ...s, mode: m.key }))}
                         className={`w-full text-left p-4 border transition-all ${selected.mode === m.key ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
                         <div className="flex items-center gap-4">
-                          <span className="text-2xl text-aurum-yellow">{m.icon}</span>
+                          
                           <div>
                             <div className="text-xs font-semibold text-aurum-black">{m.label}</div>
                             <div className="text-xs text-gray-400 mt-0.5">{m.desc}</div>
