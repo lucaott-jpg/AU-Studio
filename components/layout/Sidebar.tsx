@@ -1,14 +1,14 @@
-'use client'
+﻿'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 const navItems = [
-  { label: 'Dashboard',  href: '/dashboard',           icon: '▪' },
-  { label: 'Brands',     href: '/dashboard/brands',     icon: '◉' },
-  { label: 'Documents',  href: '/dashboard/documents',  icon: '▤' },
-  { label: 'AU Studio',  href: '/dashboard/au-studio',  icon: '✦' },
-  { label: 'Settings',   href: '/dashboard/settings',   icon: '◎' },
+  { label: 'Dashboard',  href: '/dashboard',           icon: 'â–ª' },
+  { label: 'Brands',     href: '/dashboard/brands',     icon: 'â—‰' },
+  { label: 'Documents',  href: '/dashboard/documents',  icon: 'â–¤' },
+  { label: 'AU Studio',  href: '/dashboard/au-studio',  icon: 'âœ¦' },
+  { label: 'Settings',   href: '/dashboard/settings',   icon: 'â—Ž' },
 ]
 
 export default function Sidebar() {
@@ -53,3 +53,4 @@ export default function Sidebar() {
     </aside>
   )
 }
+
