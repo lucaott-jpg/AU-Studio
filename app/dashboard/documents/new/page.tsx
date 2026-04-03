@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -242,19 +242,19 @@ export default function NewDocumentPage() {
           doc.setFillColor(255,255,255); doc.rect(0,0,W,11,'F')
           doc.setFillColor(S.r,S.g,S.b); doc.rect(0,10.5,W,0.5,'F')
           doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(7); doc.setFont('helvetica','bold')
-          doc.text(brand.name.toUpperCase(), M, 7)
+          doc.text((brand?.name ?? "").toUpperCase(), M, 7)
           doc.setTextColor(160,160,160); doc.setFont('helvetica','normal')
           doc.text(parsed!.title.substring(0,50).toUpperCase(), W-M, 7, {align:'right'})
         } else if (template === 'split') {
           doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,55,H,'F')
           doc.setFillColor(S.r,S.g,S.b); doc.rect(55,0,W-55,11,'F')
           doc.setTextColor(255,255,255); doc.setFontSize(6.5); doc.setFont('helvetica','bold')
-          doc.text(brand.name.toUpperCase(), 5, 7)
+          doc.text((brand?.name ?? "").toUpperCase(), 5, 7)
         } else {
           doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,11,'F')
           doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,4,11,'F')
           doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7); doc.setFont('helvetica','bold')
-          doc.text(brand.name.toUpperCase(), 8, 7)
+          doc.text((brand?.name ?? "").toUpperCase(), 8, 7)
           doc.setTextColor(140,140,140); doc.setFont('helvetica','normal')
           doc.text(parsed!.title.substring(0,50).toUpperCase(), W-M, 7, {align:'right'})
         }
@@ -285,7 +285,7 @@ export default function NewDocumentPage() {
         doc.setTextColor(A.r,A.g,A.b); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
         doc.text(docLabel, M, 26)
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(8.5); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), M, 34)
+        doc.text((brand?.name ?? "").toUpperCase(), M, 34)
         doc.setFillColor(S.r,S.g,S.b); doc.rect(M,37,28,0.7,'F')
         doc.setTextColor(255,255,255); doc.setFontSize(24); doc.setFont('helvetica','bold')
         let ty = 52
@@ -298,7 +298,7 @@ export default function NewDocumentPage() {
         doc.setTextColor(255,255,255); doc.setFontSize(8.5); doc.setFont('helvetica','bold')
         doc.text('AU Studio',M,H-22); doc.text(today,90,H-22); doc.text('CONFIDENTIAL',148,H-22)
         doc.setTextColor(90,90,90); doc.setFontSize(6.5); doc.setFont('helvetica','normal')
-        doc.text(brand.legal_name||brand.name, M, H-10)
+        doc.text((brand?.legal_name || brand?.name || ""), M, H-10)
 
       } else if (template === 'minimal') {
         doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F')
@@ -308,7 +308,7 @@ export default function NewDocumentPage() {
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
         doc.text(docLabel, M, 26)
         doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(8.5); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), M, 34)
+        doc.text((brand?.name ?? "").toUpperCase(), M, 34)
         doc.setFillColor(S.r,S.g,S.b); doc.rect(M,36.5,22,0.6,'F')
         doc.setTextColor(10,10,10); doc.setFontSize(26); doc.setFont('helvetica','bold')
         let ty = 52
@@ -319,7 +319,7 @@ export default function NewDocumentPage() {
         doc.setTextColor(10,10,10); doc.setFont('helvetica','bold'); doc.setFontSize(8.5)
         doc.text('AU Studio',M,H-39); doc.text(today,90,H-39)
         doc.setTextColor(150,150,150); doc.setFontSize(7); doc.setFont('helvetica','normal')
-        doc.text(brand.legal_name||brand.name, M, H-25)
+        doc.text((brand?.legal_name || brand?.name || ""), M, H-25)
 
       } else if (template === 'split') {
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,55,H,'F')
@@ -327,7 +327,7 @@ export default function NewDocumentPage() {
         doc.setFillColor(S.r,S.g,S.b); doc.rect(55,0,1.5,H,'F')
         await placeLogo(4, 18, 46, 20)
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(6.5); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), 5, 52)
+        doc.text((brand?.name ?? "").toUpperCase(), 5, 52)
         doc.setTextColor(A.r,A.g,A.b); doc.setFontSize(7); doc.setFont('helvetica','normal')
         doc.text(docLabel, 62, 40)
         doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(22); doc.setFont('helvetica','bold')
@@ -336,7 +336,7 @@ export default function NewDocumentPage() {
         doc.setFillColor(S.r,S.g,S.b); doc.rect(62,ty+2,W-55-M-8,0.6,'F')
         doc.setTextColor(100,100,100); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
         doc.text('AU Studio  |  '+today+'  |  Confidential', 62, H-25)
-        doc.text(brand.legal_name||brand.name, 62, H-15)
+        doc.text((brand?.legal_name || brand?.name || ""), 62, H-15)
 
       } else { // executive
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,H*0.52,'F')
@@ -346,7 +346,7 @@ export default function NewDocumentPage() {
         doc.setTextColor(A.r,A.g,A.b); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
         doc.text(docLabel, M, 26)
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7.5); doc.setFont('helvetica','bold')
-        doc.text(brand.name.toUpperCase(), M, 33)
+        doc.text((brand?.name ?? "").toUpperCase(), M, 33)
         doc.setTextColor(255,255,255); doc.setFontSize(26); doc.setFont('helvetica','bold')
         let ty = H*0.52-46
         doc.splitTextToSize(parsed.title.toUpperCase(), CW).forEach((l: string) => { doc.text(l,M,ty); ty+=9 })
@@ -354,7 +354,7 @@ export default function NewDocumentPage() {
         doc.text('Prepared by AU Studio  Â·  '+today+'  Â·  Confidential', M, H*0.52+18)
         doc.setFillColor(A.r,A.g,A.b); doc.rect(M,H*0.52+22,35,0.5,'F')
         doc.setTextColor(60,60,60); doc.setFontSize(9); doc.setFont('helvetica','normal')
-        doc.text(brand.legal_name||brand.name, M, H*0.52+32)
+        doc.text((brand?.legal_name || brand?.name || ""), M, H*0.52+32)
       }
 
       // â”€â”€ CONTENTS â”€â”€
@@ -428,7 +428,7 @@ export default function NewDocumentPage() {
           status: 'draft',
           current_version: 1,
           sections: parsed.sections,
-          metadata: { company: brand.name, date: today, template }
+          metadata: { company: (brand?.name ?? ""), date: today, template }
         })
       } catch (e) { console.error('Save error:', e) }
 
