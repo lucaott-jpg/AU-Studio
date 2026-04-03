@@ -66,16 +66,25 @@ export default function NewDocumentPage() {
 
   useEffect(() => {
     if (!brand) { setLogoDataUrl(''); return }
+    // Prefer transparent logo, fall back to original
     const url = brand.logo_transparent_url || brand.logo_url
     if (!url) { setLogoDataUrl(''); return }
-    const img = new Image(); img.crossOrigin = 'anonymous'
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
     img.onload = () => {
       const cv = document.createElement('canvas')
-      cv.width = img.naturalWidth; cv.height = img.naturalHeight
-      cv.getContext('2d')!.drawImage(img, 0, 0)
+      cv.width = img.naturalWidth
+      cv.height = img.naturalHeight
+      const ctx = cv.getContext('2d')!
+      // If no transparent version, clear background first
+      if (!brand.logo_transparent_url) {
+        ctx.clearRect(0, 0, cv.width, cv.height)
+      }
+      ctx.drawImage(img, 0, 0)
       setLogoDataUrl(cv.toDataURL('image/png'))
     }
-    img.src = url
+    img.onerror = () => setLogoDataUrl('')
+    img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now()
   }, [brand])
 
   async function handleFile(f: File) {
@@ -105,22 +114,41 @@ export default function NewDocumentPage() {
   }
 
   function parseContent(text: string, filename: string) {
-    const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
+    const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
     const sections: { heading: string; content: string }[] = []
-    let heading = 'Overview', content: string[] = []
+    let heading = 'Overview', contentLines: string[] = []
+
     for (const line of lines) {
-      const isHeader = line === line.toUpperCase() && line.length < 60 && line.length > 2 && !/^\d/.test(line)
-      if (isHeader && content.length > 0) {
-        sections.push({ heading, content: content.join('\n') })
-        heading = line; content = []
-      } else if (isHeader) { heading = line }
-      else { content.push(line) }
+      // Detect section headers: all caps, short, no leading numbers
+      const isAllCaps = line === line.toUpperCase()
+      const isShort = line.length < 50 && line.length > 2
+      const noLeadingNum = !/^[\d$-]/.test(line)
+      const isHeader = isAllCaps && isShort && noLeadingNum &&
+        !line.includes(',') && !/(\d{1,3},\d{3}|\d+\.\d{2})/.test(line)
+
+      if (isHeader && contentLines.length > 2) {
+        sections.push({ heading, content: contentLines.join('\n') })
+        heading = line
+        contentLines = []
+      } else if (isHeader && contentLines.length === 0) {
+        heading = line
+      } else {
+        contentLines.push(line)
+      }
     }
-    if (content.length > 0) sections.push({ heading, content: content.join('\n') })
-    if (sections.length <= 1) {
-      const chunks = text.match(/[\s\S]{1,800}/g) || []
-      return { title, sections: chunks.map((c, i) => ({ heading: i === 0 ? 'Content' : 'Section ' + (i+1), content: c })) }
+    if (contentLines.length > 0) sections.push({ heading, content: contentLines.join('\n') })
+
+    // Fallback for single block
+    if (sections.length <= 1 && text.length > 500) {
+      const halfLen = Math.floor(text.length / 2)
+      const splitPoint = text.indexOf('\n', halfLen)
+      if (splitPoint > 0) {
+        return { title, sections: [
+          { heading: 'Assets', content: text.substring(0, splitPoint) },
+          { heading: 'Liabilities & Equity', content: text.substring(splitPoint) }
+        ]}
+      }
     }
     return { title, sections: sections.slice(0, 12) }
   }
@@ -137,15 +165,25 @@ export default function NewDocumentPage() {
       const A = hexToRgb(brand.accent_color)
       const dark = isDark(brand.primary_color)
 
-      function addLogo(x: number, y: number, maxW: number, maxH: number) {
+      async function addLogo(x: number, y: number, maxW: number, maxH: number) {
         if (!logoDataUrl) return
         try {
-          const img = new Image(); img.src = logoDataUrl
-          if (!img.naturalWidth) return
-          const ratio = Math.min(maxW/img.naturalWidth, maxH/img.naturalHeight)
-          const lw=img.naturalWidth*ratio, lh=img.naturalHeight*ratio
-          if (dark) { doc.setFillColor(255,255,255); doc.roundedRect(x-2,y-2,lw+4,lh+4,1,1,'F') }
-          doc.addImage(logoDataUrl,'PNG',x,y,lw,lh)
+          // Get image dimensions by loading it
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image()
+            i.onload = () => resolve(i)
+            i.onerror = () => reject()
+            i.src = logoDataUrl
+          })
+          const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight)
+          const lw = img.naturalWidth * ratio
+          const lh = img.naturalHeight * ratio
+          // Add white padding behind logo on dark backgrounds
+          if (dark || !brand?.logo_transparent_url) {
+            doc.setFillColor(255, 255, 255)
+            doc.roundedRect(x - 3, y - 3, lw + 6, lh + 6, 1, 1, 'F')
+          }
+          doc.addImage(logoDataUrl, 'PNG', x, y, lw, lh)
         } catch {}
       }
 
@@ -191,7 +229,7 @@ export default function NewDocumentPage() {
         doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F')
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,3,'F')
         doc.setFillColor(S.r,S.g,S.b); doc.rect(0,3,W,0.8,'F')
-        addLogo(W-M-48, 18, 43, 17)
+        await addLogo(W-M-48, 18, 43, 17)
         doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(8); doc.setFont('helvetica','bold')
         doc.text((brand?.name||'').toUpperCase(), M, 32)
         doc.setFillColor(S.r,S.g,S.b); doc.rect(M,34.5,22,0.6,'F')
@@ -209,7 +247,10 @@ export default function NewDocumentPage() {
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,H,'F')
         doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,5,H,'F')
         doc.setFillColor(A.r,A.g,A.b); doc.rect(W-52,0,52,6,'F')
-        addLogo(W-M-48, 13, 43, 17)
+        await addLogo(W-M-48, 13, 43, 17)
+        // Document type label
+        doc.setTextColor(A.r,A.g,A.b); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
+        doc.text(DOC_TYPES.find(t=>t.key===docType)?.label.toUpperCase() || 'DOCUMENT', M, 25)
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(8); doc.setFont('helvetica','bold')
         doc.text((brand?.name||'').toUpperCase(), M, 33)
         doc.setFillColor(S.r,S.g,S.b); doc.rect(M,36,28,0.7,'F')
@@ -228,7 +269,7 @@ export default function NewDocumentPage() {
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,55,H,'F')
         doc.setFillColor(255,255,255); doc.rect(55,0,W-55,H,'F')
         doc.setFillColor(S.r,S.g,S.b); doc.rect(55,0,1.5,H,'F')
-        addLogo(4, 18, 46, 20)
+        await addLogo(4, 18, 46, 20)
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(6.5); doc.setFont('helvetica','bold')
         doc.text((brand?.name||'').toUpperCase(), 5, 50)
         doc.setTextColor(P.r,P.g,P.b); doc.setFontSize(22); doc.setFont('helvetica','bold')
@@ -242,7 +283,7 @@ export default function NewDocumentPage() {
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,H*0.52,'F')
         doc.setFillColor(255,255,255); doc.rect(0,H*0.52,W,H*0.48,'F')
         doc.setFillColor(S.r,S.g,S.b); doc.rect(0,H*0.52-0.8,W,1.6,'F')
-        addLogo(W-M-46, 14, 41, 16)
+        await await addLogo(W-M-46, 14, 41, 16)
         doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
         doc.text((brand?.name||'').toUpperCase(), M, 28)
         doc.setTextColor(255,255,255); doc.setFontSize(26); doc.setFont('helvetica','bold')
