@@ -200,7 +200,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
           doc.setTextColor(255,255,255); doc.setFontSize(isH?26:22); doc.setFont('helvetica','bold')
           const tLines = doc.splitTextToSize(slide.title.toUpperCase(), CW-20)
           let ty = isH ? 66 : 78
-          tLines.forEach((l:string)=>{ doc.text(l,M,ty); ty+=isH?9:8 })
+          tLines.forEach((l:string)=>{ doc.text(l,M,ty); ty+=(isH?9:8) })
 
           // Subtitle
           if (slide.subtitle) {
@@ -232,7 +232,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
             doc.text(String(i+1).padStart(2,'0'), M+1, y)
             doc.setTextColor(30,30,30); doc.setFontSize(isH?12:10); doc.setFont('helvetica','normal')
             doc.text(pt, M+10, y)
-            y += isH?14:12
+            y += (isH?14:12)
           })
           slideFooter(idx+1)
 
@@ -244,7 +244,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
           doc.setTextColor(255,255,255); doc.setFontSize(isH?16:13); doc.setFont('helvetica','bold')
           const qLines = doc.splitTextToSize(`"${slide.quote}"`, CW-10)
           let qly = qy
-          qLines.forEach((l:string)=>{ doc.text(l, M+8, qly); qly+=isH?8:7 })
+          qLines.forEach((l:string)=>{ doc.text(l, M+8, qly); qly+=(isH?8:7) })
           if (slide.author) {
             doc.setTextColor(A.r,A.g,A.b); doc.setFontSize(10); doc.setFont('helvetica','normal')
             doc.text(slide.author, M+8, qly+8)
@@ -258,11 +258,11 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
           addLogo(W-M-44, 14, 38, 14)
           let y = isH?50:65
           doc.setTextColor(S.r,S.g,S.b); doc.setFontSize(isH?22:18); doc.setFont('helvetica','bold')
-          doc.text(slide.title.toUpperCase(), M, y); y+=isH?14:12
+          doc.text(slide.title.toUpperCase(), M, y); y+=(isH?14:12)
           slide.points?.forEach(pt=>{
             doc.setFillColor(S.r,S.g,S.b); doc.rect(M, y-3, 3, 3, 'F')
             doc.setTextColor(255,255,255); doc.setFontSize(isH?11:10); doc.setFont('helvetica','normal')
-            doc.text(pt, M+7, y); y+=isH?10:9
+            doc.text(pt, M+7, y); y+=(isH?10:9)
           })
           if (slide.note) {
             doc.setFillColor(S.r,S.g,S.b); doc.rect(M, y+8, CW-20, 0.6, 'F')
@@ -289,7 +289,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
           if (slide.body) {
             doc.setFontSize(isH?10:9); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60)
             const bLines = doc.splitTextToSize(slide.body, CW)
-            bLines.forEach((l:string)=>{ doc.text(l,M,y); y+=isH?5.5:5 })
+            bLines.forEach((l:string)=>{ doc.text(l,M,y); y+=(isH?5.5:5) })
             y += 4
           }
 
@@ -301,7 +301,7 @@ Build 8-14 slides. Each content slide must have a clear, punchy title and substa
             doc.rect(M, y-3, 2.5, 2.5, 'F')
             doc.setFontSize(isH?10:9); doc.setFont('helvetica','normal'); doc.setTextColor(25,25,25)
             const ptLines = doc.splitTextToSize(pt, CW-8)
-            ptLines.forEach((l:string,li:number)=>{ doc.text(l, M+6, y+(li*isH?5:4.5)); })
+            ptLines.forEach((l:string,li:number)=>{ doc.text(l, M+6, y+(li*(isH?5:4.5))); })
             y += isH?(ptLines.length*5+4):(ptLines.length*4.5+4)
           })
           slideFooter(idx+1)
