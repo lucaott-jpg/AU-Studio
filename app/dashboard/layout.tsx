@@ -23,8 +23,3 @@ export default async function DashboardLayout({
     </div>
   )
 }
-```
-
-Actually that's the same file — the issue is in the **Sidebar** component. Open this file:
-```
-C:\Users\luca2\OneDrive\Documents\GitHub\AU-Studio\components\layout\Sidebar.tsx
