@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -230,7 +230,7 @@ export default function NewDocumentPage() {
           const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight)
           const lw = img.naturalWidth * ratio, lh = img.naturalHeight * ratio
           // White backing only for non-transparent logo on dark background
-          if (dark && !brand.logo_transparent_url) {
+          if (dark && !brand?.logo_transparent_url) {
             doc.setFillColor(255, 255, 255); doc.rect(x - 2, y - 2, lw + 4, lh + 4, 'F')
           }
           doc.addImage(logoDataUrl, 'PNG', x, y, lw, lh)
@@ -276,7 +276,7 @@ export default function NewDocumentPage() {
         }
       }
 
-      // ── COVER ──
+      // â”€â”€ COVER â”€â”€
       if (template === 'institutional') {
         doc.setFillColor(P.r,P.g,P.b); doc.rect(0,0,W,H,'F')
         doc.setFillColor(S.r,S.g,S.b); doc.rect(0,0,5,H,'F')
@@ -351,13 +351,13 @@ export default function NewDocumentPage() {
         let ty = H*0.52-46
         doc.splitTextToSize(parsed.title.toUpperCase(), CW).forEach((l: string) => { doc.text(l,M,ty); ty+=9 })
         doc.setTextColor(80,80,80); doc.setFontSize(7.5); doc.setFont('helvetica','normal')
-        doc.text('Prepared by AU Studio  ·  '+today+'  ·  Confidential', M, H*0.52+18)
+        doc.text('Prepared by AU Studio  Â·  '+today+'  Â·  Confidential', M, H*0.52+18)
         doc.setFillColor(A.r,A.g,A.b); doc.rect(M,H*0.52+22,35,0.5,'F')
         doc.setTextColor(60,60,60); doc.setFontSize(9); doc.setFont('helvetica','normal')
         doc.text(brand.legal_name||brand.name, M, H*0.52+32)
       }
 
-      // ── CONTENTS ──
+      // â”€â”€ CONTENTS â”€â”€
       doc.addPage(); pageHeader()
       const cx = template === 'split' ? 62 : M
       const cw = template === 'split' ? W-55-M-8 : CW
@@ -377,7 +377,7 @@ export default function NewDocumentPage() {
       })
       pageFooter(2)
 
-      // ── CONTENT PAGES ──
+      // â”€â”€ CONTENT PAGES â”€â”€
       parsed.sections.forEach((section, idx) => {
         doc.addPage(); pageHeader()
         let y = 24
@@ -547,9 +547,9 @@ export default function NewDocumentPage() {
                   </div>
                 ) : (
                   <div>
-                    <div className="text-4xl text-gray-200 mb-4">↑</div>
+                    <div className="text-4xl text-gray-200 mb-4">â†‘</div>
                     <div className="text-sm font-medium text-gray-500 mb-1">Drop file here or click to browse</div>
-                    <div className="text-xs text-gray-300">PDF · Word (.docx) · Text</div>
+                    <div className="text-xs text-gray-300">PDF Â· Word (.docx) Â· Text</div>
                   </div>
                 )}
               </div>
@@ -613,7 +613,7 @@ export default function NewDocumentPage() {
                       )}
                       {template===t.key && (
                         <div className="absolute top-2 right-2 w-5 h-5 bg-aurum-yellow flex items-center justify-center">
-                          <span className="text-aurum-black font-bold text-xs">✓</span>
+                          <span className="text-aurum-black font-bold text-xs">âœ“</span>
                         </div>
                       )}
                     </div>
@@ -639,3 +639,4 @@ export default function NewDocumentPage() {
     </div>
   )
 }
+
