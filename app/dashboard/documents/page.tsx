@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -15,14 +15,14 @@ interface Document {
 }
 
 const DOC_TYPES = [
-  { key: 'report',    label: 'Report',              desc: 'Analytical report with findings and recommendations', icon: '▤' },
-  { key: 'teaser',    label: 'Investment Teaser',   desc: 'High-level opportunity overview for investors', icon: '◈' },
-  { key: 'loi',       label: 'Letter of Intent',    desc: 'Formal LOI outlining preliminary transaction terms', icon: '▣' },
-  { key: 'memo',      label: 'Executive Memo',      desc: 'Concise internal communication to leadership', icon: '▥' },
-  { key: 'proposal',  label: 'Proposal',            desc: 'Formal business proposal with scope and fees', icon: '▦' },
-  { key: 'termsheet', label: 'Term Sheet',          desc: 'Principal terms of a proposed transaction', icon: '▧' },
-  { key: 'board',     label: 'Board Presentation',  desc: 'Board-level presentation on strategy and performance', icon: '▨' },
-  { key: 'pitch-deck',label: 'Pitch Deck',          desc: 'Investor or client presentation deck', icon: '▩' },
+  { key: 'report',    label: 'Report',              desc: 'Analytical report with findings and recommendations', icon: 'â–¤' },
+  { key: 'teaser',    label: 'Investment Teaser',   desc: 'High-level opportunity overview for investors', icon: 'â—ˆ' },
+  { key: 'loi',       label: 'Letter of Intent',    desc: 'Formal LOI outlining preliminary transaction terms', icon: 'â–£' },
+  { key: 'memo',      label: 'Executive Memo',      desc: 'Concise internal communication to leadership', icon: 'â–¥' },
+  { key: 'proposal',  label: 'Proposal',            desc: 'Formal business proposal with scope and fees', icon: 'â–¦' },
+  { key: 'termsheet', label: 'Term Sheet',          desc: 'Principal terms of a proposed transaction', icon: 'â–§' },
+  { key: 'board',     label: 'Board Presentation',  desc: 'Board-level presentation on strategy and performance', icon: 'â–¨' },
+  { key: 'pitch-deck',label: 'Pitch Deck',          desc: 'Investor or client presentation deck', icon: 'â–©' },
 ]
 
 const STATUS_STYLES: Record<string, string> = {
@@ -202,8 +202,8 @@ function DocumentsInner() {
                       {DOC_TYPES.find(t => t.key === doc.doc_type)?.label || doc.doc_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{doc.brands?.name || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{doc.deals?.name || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{doc.brands?.name || 'â€”'}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{doc.deals?.name || 'â€”'}</td>
                   <td className="px-4 py-3">
                     <select value={doc.status} onChange={e => updateStatus(doc.id, e.target.value)}
                       className={`text-xs px-2 py-1 border outline-none bg-transparent cursor-pointer ${STATUS_STYLES[doc.status]}`}>
@@ -240,7 +240,7 @@ function DocumentsInner() {
                   <span className="text-xs text-gray-500 ml-1">Step {step} of 3</span>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-xl leading-none">âœ•</button>
             </div>
 
             <div className="p-6">
@@ -286,7 +286,7 @@ function DocumentsInner() {
                             <div className="w-4 h-8" style={{ background: brand.secondary_color }}/>
                           </div>
                           <div className="font-medium text-sm text-aurum-black">{brand.name}</div>
-                          {selected.brand === brand.id && <div className="ml-auto text-aurum-yellow">✓</div>}
+                          {selected.brand === brand.id && <div className="ml-auto text-aurum-yellow">âœ“</div>}
                         </button>
                       ))}
                     </div>
@@ -299,13 +299,13 @@ function DocumentsInner() {
                 <div>
                   <div className="text-sm font-medium text-aurum-black mb-1">How would you like to start?</div>
                   <div className="text-xs text-gray-400 mb-4">
-                    Creating: <strong>{selectedDocType?.label}</strong> · Brand: <strong>{selectedBrand?.name}</strong>
+                    Creating: <strong>{selectedDocType?.label}</strong> Â· Brand: <strong>{selectedBrand?.name}</strong>
                   </div>
                   <div className="space-y-2">
                     {[
-                      { key: 'ai', icon: '✦', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
-                      { key: 'blank', icon: '▤', label: 'Start blank', desc: 'Open the editor with an empty document and write from scratch' },
-                      { key: 'upload', icon: '↑', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
+                      { key: 'ai', icon: 'âœ¦', label: 'Generate with AU', desc: 'Describe your document and AU will draft it at institutional quality' },
+                      { key: 'blank', icon: 'â–¤', label: 'Start blank', desc: 'Open the editor with an empty document and write from scratch' },
+                      { key: 'upload', icon: 'â†‘', label: 'Upload & improve', desc: 'Upload an existing document and AU will refine and reformat it' },
                     ].map(m => (
                       <button key={m.key} onClick={() => setSelected(s => ({ ...s, mode: m.key }))}
                         className={`w-full text-left p-4 border transition-all ${selected.mode === m.key ? 'border-aurum-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -315,7 +315,7 @@ function DocumentsInner() {
                             <div className="text-xs font-semibold text-aurum-black">{m.label}</div>
                             <div className="text-xs text-gray-400 mt-0.5">{m.desc}</div>
                           </div>
-                          {selected.mode === m.key && <div className="ml-auto text-aurum-yellow">✓</div>}
+                          {selected.mode === m.key && <div className="ml-auto text-aurum-yellow">âœ“</div>}
                         </div>
                       </button>
                     ))}
@@ -331,7 +331,7 @@ function DocumentsInner() {
                   </button>
                 )}
                 <div className="flex-1"/>
-                {step < 4 ? (
+                {step < 3 ? (
                   <button onClick={handleNext} disabled={!canNext()}
                     className="bg-aurum-black text-white px-8 py-3 text-xs font-medium hover:bg-aurum-yellow hover:text-aurum-black transition-colors disabled:opacity-40">
                     Continue
@@ -339,7 +339,7 @@ function DocumentsInner() {
                 ) : (
                   <button onClick={handleCreate} disabled={!canNext()}
                     className="bg-aurum-yellow text-aurum-black px-8 py-3 text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-40">
-                    Create document →
+                    Create document â†’
                   </button>
                 )}
               </div>
@@ -358,3 +358,4 @@ export default function DocumentsPage() {
     </Suspense>
   )
 }
+
